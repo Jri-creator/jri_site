@@ -4,16 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jri Radio</title>
-    
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FWE0SHK7D7"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-FWE0SHK7D7');
-    </script>
-    
     <style>
         :root {
             --bg-color: #74b9ff;
@@ -555,8 +545,8 @@
                 if (this.tracks.length > 0) {
                     const track = this.tracks[this.currentTrackIndex];
                     const baseTitle = this.isPlaying ? 
-                        `♪ ${track.title} - ${track.artist}` : 
-                        `⏸ ${track.title} - ${track.artist}`;
+                        ` ${track.title} - ${track.artist}` : 
+                        ` ${track.title} - ${track.artist}`;
                     document.title = baseTitle;
                 } else {
                     document.title = 'Jri Radio';
