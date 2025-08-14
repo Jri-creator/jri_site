@@ -333,7 +333,7 @@ create_index_html() {
             color: var(--secondary-text);
         }
         
-        .theme-toggle, .scroll-toggle {
+        .theme-toggle {
             background: none;
             border: none;
             color: var(--secondary-text);
@@ -389,7 +389,6 @@ create_index_html() {
     <div class="header">
         <h1>Jri Radio</h1>
         <div class="header-controls">
-            <button id="scroll-toggle" class="scroll-toggle">Tab Scroll On</button>
             <button id="theme-toggle" class="theme-toggle">Dark Mode</button>
         </div>
     </div>
@@ -452,13 +451,10 @@ create_index_html() {
                 this.errorDisplay = document.getElementById('error-display');
                 this.volumeSlider = document.getElementById('volume-slider');
                 this.themeToggle = document.getElementById('theme-toggle');
-                this.scrollToggle = document.getElementById('scroll-toggle');
                 
                 this.tracks = [];
                 this.currentTrackIndex = 0;
                 this.isPlaying = false;
-                this.scrollEnabled = true;
-                this.titleInterval = null;
                 this.hasUserInteracted = false;
                 
                 this.init();
@@ -494,13 +490,6 @@ create_index_html() {
                     document.body.classList.add('dark-mode');
                     this.themeToggle.textContent = 'Light Mode';
                 }
-                
-                // Load saved scroll setting
-                const scrollSetting = localStorage.getItem('jriRadioScrollEnabled');
-                if (scrollSetting !== null) {
-                    this.scrollEnabled = scrollSetting === 'true';
-                    this.scrollToggle.textContent = this.scrollEnabled ? 'Tab Scroll On' : 'Tab Scroll Off';
-                }
             }
             
             setupEventListeners() {
@@ -508,7 +497,6 @@ create_index_html() {
                 this.nextButton.addEventListener('click', () => this.nextTrack());
                 this.volumeSlider.addEventListener('input', (e) => this.setVolume(e.target.value));
                 this.themeToggle.addEventListener('click', () => this.toggleTheme());
-                this.scrollToggle.addEventListener('click', () => this.toggleScroll());
                 
                 this.audioPlayer.addEventListener('timeupdate', () => this.updateProgress());
                 this.audioPlayer.addEventListener('ended', () => this.nextTrack());
@@ -726,45 +714,10 @@ create_index_html() {
                     const baseTitle = this.isPlaying ? 
                         `♪ ${track.title} - ${track.artist}` : 
                         `⏸ ${track.title} - ${track.artist}`;
-                    
-                    if (this.scrollEnabled && baseTitle.length > 40) {
-                        this.startTitleScroll(baseTitle);
-                    } else {
-                        document.title = baseTitle;
-                        if (this.titleInterval) {
-                            clearInterval(this.titleInterval);
-                            this.titleInterval = null;
-                        }
-                    }
+                    document.title = baseTitle;
                 } else {
                     document.title = 'Jri Radio';
                 }
-            }
-            
-            startTitleScroll(fullTitle) {
-                if (this.titleInterval) {
-                    clearInterval(this.titleInterval);
-                }
-                
-                let position = 0;
-                const maxLength = 60; // Maximum title length before scrolling
-                
-                if (fullTitle.length <= maxLength) {
-                    document.title = fullTitle;
-                    return;
-                }
-                
-                const scrollText = fullTitle + ' • '; // Add separator
-                
-                this.titleInterval = setInterval(() => {
-                    const displayText = scrollText.substring(position, position + maxLength);
-                    document.title = displayText;
-                    
-                    position++;
-                    if (position >= scrollText.length) {
-                        position = 0;
-                    }
-                }, 300); // Slower scroll speed
             }
             
             toggleTheme() {
@@ -772,19 +725,6 @@ create_index_html() {
                 const isDark = document.body.classList.contains('dark-mode');
                 this.themeToggle.textContent = isDark ? 'Light Mode' : 'Dark Mode';
                 localStorage.setItem('jriRadioDarkMode', isDark);
-            }
-            
-            toggleScroll() {
-                this.scrollEnabled = !this.scrollEnabled;
-                this.scrollToggle.textContent = this.scrollEnabled ? 'Tab Scroll On' : 'Tab Scroll Off';
-                localStorage.setItem('jriRadioScrollEnabled', this.scrollEnabled);
-                
-                if (!this.scrollEnabled && this.titleInterval) {
-                    clearInterval(this.titleInterval);
-                    this.titleInterval = null;
-                }
-                
-                this.updateDocumentTitle();
             }
         }
         
@@ -799,6 +739,7 @@ EOF
 
     echo "✅ Created optimized index.html for GitHub Pages"
 }
+
 
 # Function to setup GitHub Pages
 setup_github_pages() {
