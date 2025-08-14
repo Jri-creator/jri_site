@@ -72,16 +72,16 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # Optional: Notify on completion
-  notify:
-    runs-on: ubuntu-latest
-    needs: publish
-    if: always()
-    steps:
-    - name: Notify completion
-      run: |
-        if [ "${{ needs.publish.result }}" == "success" ]; then
-          echo "✅ Jri Radio Pages successfully published!"
-          echo "🌐 Site URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
-        else
-          echo "❌ Jri Radio Pages publication failed"
-        fi
+#  notify:
+ #   runs-on: ubuntu-latest
+  #  needs: publish
+  #  if: always()
+   # steps:
+    #- name: Notify completion
+     # run: |
+      #  if [ "${{ needs.publish.result }}" == "success" ]; then
+       #   echo "✅ Jri Radio Pages successfully published!"
+        #  echo "🌐 Site URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
+       # else
+        #  echo "❌ Jri Radio Pages publication failed"
+        #fi
