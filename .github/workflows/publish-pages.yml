@@ -3,10 +3,10 @@ name: Publish Jri Radio Pages
 on:
   push:
     branches: [ main, master ]
-  workflow_dispatch:
-  schedule:
+#  workflow_dispatch:
+#  schedule:
     # Run daily at 2 AM UTC to refresh data
-    - cron: '0 2 * * *'
+#    - cron: '0 2 * * *'
 
 permissions:
   contents: write
@@ -30,10 +30,10 @@ jobs:
         ffmpeg-version: release
     
     - name: Make script executable
-      run: chmod +x ./publish-pages.sh
+      run: chmod +x ./.github/workflows/publish-pages.sh
     
     - name: Run Jri Radio Publisher
-      run: ./publish-pages.sh
+      run: ./.github/workflows/publish-pages.sh
     
     - name: Setup Pages
       uses: actions/configure-pages@v4
