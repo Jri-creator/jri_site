@@ -118,6 +118,27 @@ extract_metadata() {
     echo "✅ Metadata extraction complete, saved to $FILEDATA_FILE"
 }
 
+# Function to copy .jlres3 files as .mp3 for web playback
+copy_audio_files() {
+    echo "🎵 Copying .jlres3 files as .mp3 for web playback..."
+    
+    local copied=0
+    
+    # Find all .jlres3 files and copy them with .mp3 extension to site directory
+    while IFS= read -r -d '' jlres3_file; do
+        local filename=$(basename "$jlres3_file")
+        local target_file="$SITE_DIR/${filename}.mp3"
+        
+        # Copy the file with .mp3 extension for web playback
+        cp "$jlres3_file" "$target_file"
+        copied=$((copied + 1))
+        
+        echo "Copied: $filename → ${filename}.mp3"
+        
+    done < <(find . -name "*.jlres3" -type f -print0)
+    
+    echo "✅ Copied $copied audio files for web playback"
+}
 # Function to get commit date
 get_commit_date() {
     echo "📅 Getting commit date..."
@@ -448,8 +469,19 @@ create_index_html() {
                 this.currentTrackIndex = 0;
                 this.isPlaying = false;
                 this.scrollEnabled = true;
+                this.currentBlobUrl = null; // Track blob URLs for cleanup
                 
                 this.init();
+                
+                // Cleanup blob URLs when page unloads
+                window.addEventListener('beforeunload', () => this.cleanup());
+            }
+            
+            cleanup() {
+                if (this.currentBlobUrl) {
+                    URL.revokeObjectURL(this.currentBlobUrl);
+                    this.currentBlobUrl = null;
+                }
             }
             
             async init() {
@@ -544,9 +576,8 @@ create_index_html() {
                 this.currentTrackIndex = index;
                 const track = this.tracks[index];
                 
-                // Note: In GitHub Pages, we can't serve the actual audio files
-                // This would need to be modified to point to your audio hosting solution
-                this.audioPlayer.src = `./audio/${track.filename}`;
+                // Try multiple approaches to load the .jlres3 file
+                this.loadAudioFile(track);
                 
                 this.trackTitle.textContent = track.title;
                 this.trackArtist.textContent = track.artist;
@@ -559,6 +590,83 @@ create_index_html() {
                 
                 this.updateDocumentTitle();
                 this.showPlayer();
+            }
+            
+            async loadAudioFile(track) {
+                const attempts = [
+                    // Method 1: Fetch .jlres3, convert to blob with audio/mpeg type
+                    async () => {
+                        const response = await fetch(`./${track.filename}`);
+                        if (!response.ok) throw new Error('Fetch failed');
+                        const blob = await response.blob();
+                        // Force MP3 MIME type for compatibility
+                        const audioBlob = new Blob([blob], { type: 'audio/mpeg' });
+                        const url = URL.createObjectURL(audioBlob);
+                        this.audioPlayer.src = url;
+                        // Clean up previous URL
+                        if (this.currentBlobUrl) {
+                            URL.revokeObjectURL(this.currentBlobUrl);
+                        }
+                        this.currentBlobUrl = url;
+                        return true;
+                    },
+                    
+                    // Method 2: Try direct .jlres3 file
+                    async () => {
+                        this.audioPlayer.src = `./${track.filename}`;
+                        return new Promise((resolve, reject) => {
+                            const testLoad = () => {
+                                this.audioPlayer.removeEventListener('loadedmetadata', testLoad);
+                                this.audioPlayer.removeEventListener('error', testError);
+                                resolve(true);
+                            };
+                            const testError = () => {
+                                this.audioPlayer.removeEventListener('loadedmetadata', testLoad);
+                                this.audioPlayer.removeEventListener('error', testError);
+                                reject(new Error('Direct load failed'));
+                            };
+                            this.audioPlayer.addEventListener('loadedmetadata', testLoad);
+                            this.audioPlayer.addEventListener('error', testError);
+                            this.audioPlayer.load();
+                        });
+                    },
+                    
+                    // Method 3: Try with .mp3 extension appended
+                    async () => {
+                        this.audioPlayer.src = `./${track.filename}.mp3`;
+                        return new Promise((resolve, reject) => {
+                            const testLoad = () => {
+                                this.audioPlayer.removeEventListener('loadedmetadata', testLoad);
+                                this.audioPlayer.removeEventListener('error', testError);
+                                resolve(true);
+                            };
+                            const testError = () => {
+                                this.audioPlayer.removeEventListener('loadedmetadata', testLoad);
+                                this.audioPlayer.removeEventListener('error', testError);
+                                reject(new Error('MP3 extension load failed'));
+                            };
+                            this.audioPlayer.addEventListener('loadedmetadata', testLoad);
+                            this.audioPlayer.addEventListener('error', testError);
+                            this.audioPlayer.load();
+                        });
+                    }
+                ];
+                
+                // Try each method in sequence
+                for (let i = 0; i < attempts.length; i++) {
+                    try {
+                        console.log(`Trying audio load method ${i + 1} for ${track.filename}`);
+                        await attempts[i]();
+                        console.log(`Audio load method ${i + 1} succeeded for ${track.filename}`);
+                        return;
+                    } catch (error) {
+                        console.log(`Audio load method ${i + 1} failed for ${track.filename}:`, error.message);
+                        if (i === attempts.length - 1) {
+                            console.error('All audio load methods failed for', track.filename);
+                            this.showError(`Cannot load audio file: ${track.filename}`);
+                        }
+                    }
+                }
             }
             
             showPlayer() {
