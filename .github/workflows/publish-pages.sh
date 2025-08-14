@@ -629,7 +629,7 @@ create_index_html() {
                     const repoUrl = window.location.hostname.includes('github.io') ? 
                         window.location.hostname.replace('.github.io', '') : 'Jri-creator/jri_site';
                     
-                    this.audioPlayer.src = `https://raw.githubusercontent.com/Jri-creator/jri_site/refs/heads/main/.github/workflows/publish-pages.sh`;
+                    this.audioPlayer.src = `https://raw.githubusercontent.com/Jri-creator/jri_site/refs/heads/main/.github/workflows/${track.filename}`;
                     this.audioPlayer.load();
                     
                     console.log(`Audio source set to: ${this.audioPlayer.src}`);
