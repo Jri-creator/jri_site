@@ -223,17 +223,6 @@
             margin: 20px 0;
         }
         
-        @keyframes scroll-left {
-            0% { transform: translateX(100%); }
-            100% { transform: translateX(-100%); }
-        }
-        
-        .scrolling-title {
-            display: inline-block;
-            animation: scroll-left 15s linear infinite;
-            white-space: nowrap;
-        }
-        
         #audio-player {
             display: none;
         }
@@ -312,25 +301,49 @@
                 this.currentTrackIndex = 0;
                 this.isPlaying = false;
                 this.scrollEnabled = true;
-                this.currentBlobUrl = null; // Track blob URLs for cleanup
+                this.titleInterval = null;
+                this.hasUserInteracted = false;
                 
                 this.init();
                 
-                // Cleanup blob URLs when page unloads
-                window.addEventListener('beforeunload', () => this.cleanup());
-            }
-            
-            cleanup() {
-                if (this.currentBlobUrl) {
-                    URL.revokeObjectURL(this.currentBlobUrl);
-                    this.currentBlobUrl = null;
-                }
+                // Track user interaction for autoplay
+                document.addEventListener('click', () => {
+                    this.hasUserInteracted = true;
+                }, { once: true });
+                
+                document.addEventListener('keydown', () => {
+                    this.hasUserInteracted = true;
+                }, { once: true });
             }
             
             async init() {
                 this.setupEventListeners();
                 await this.loadTrackData();
                 this.loadTrack(0);
+                this.loadSavedSettings();
+            }
+            
+            loadSavedSettings() {
+                // Load saved volume
+                const savedVolume = localStorage.getItem('jriRadioVolume');
+                if (savedVolume) {
+                    this.volumeSlider.value = savedVolume;
+                    this.audioPlayer.volume = savedVolume;
+                }
+                
+                // Load saved theme
+                const isDarkMode = localStorage.getItem('jriRadioDarkMode') === 'true';
+                if (isDarkMode) {
+                    document.body.classList.add('dark-mode');
+                    this.themeToggle.textContent = 'Light Mode';
+                }
+                
+                // Load saved scroll setting
+                const scrollSetting = localStorage.getItem('jriRadioScrollEnabled');
+                if (scrollSetting !== null) {
+                    this.scrollEnabled = scrollSetting === 'true';
+                    this.scrollToggle.textContent = this.scrollEnabled ? 'Tab Scroll On' : 'Tab Scroll Off';
+                }
             }
             
             setupEventListeners() {
@@ -343,8 +356,24 @@
                 this.audioPlayer.addEventListener('timeupdate', () => this.updateProgress());
                 this.audioPlayer.addEventListener('ended', () => this.nextTrack());
                 this.audioPlayer.addEventListener('loadedmetadata', () => this.updateTimeDisplay());
+                this.audioPlayer.addEventListener('canplay', () => this.handleCanPlay());
+                this.audioPlayer.addEventListener('error', (e) => this.handleAudioError(e));
                 
                 this.progressContainer.addEventListener('click', (e) => this.seek(e));
+            }
+            
+            handleCanPlay() {
+                // Auto-start playback if user has interacted and this is the first track
+                if (this.hasUserInteracted && this.currentTrackIndex === 0 && !this.isPlaying) {
+                    this.togglePlay();
+                }
+            }
+            
+            handleAudioError(e) {
+                console.error('Audio error:', e);
+                console.log('Error details:', this.audioPlayer.error);
+                // Try next track on error
+                setTimeout(() => this.nextTrack(), 1000);
             }
             
             async loadTrackData() {
@@ -419,7 +448,7 @@
                 this.currentTrackIndex = index;
                 const track = this.tracks[index];
                 
-                // Try multiple approaches to load the .jlres3 file
+                // Load audio file using GitHub raw URL
                 this.loadAudioFile(track);
                 
                 this.trackTitle.textContent = track.title;
@@ -436,79 +465,21 @@
             }
             
             async loadAudioFile(track) {
-                const attempts = [
-                    // Method 1: Fetch .jlres3, convert to blob with audio/mpeg type
-                    async () => {
-                        const response = await fetch(`./${track.filename}`);
-                        if (!response.ok) throw new Error('Fetch failed');
-                        const blob = await response.blob();
-                        // Force MP3 MIME type for compatibility
-                        const audioBlob = new Blob([blob], { type: 'audio/mpeg' });
-                        const url = URL.createObjectURL(audioBlob);
-                        this.audioPlayer.src = url;
-                        // Clean up previous URL
-                        if (this.currentBlobUrl) {
-                            URL.revokeObjectURL(this.currentBlobUrl);
-                        }
-                        this.currentBlobUrl = url;
-                        return true;
-                    },
+                try {
+                    console.log(`Loading audio file: ${track.filename}`);
                     
-                    // Method 2: Try direct .jlres3 file
-                    async () => {
-                        this.audioPlayer.src = `./${track.filename}`;
-                        return new Promise((resolve, reject) => {
-                            const testLoad = () => {
-                                this.audioPlayer.removeEventListener('loadedmetadata', testLoad);
-                                this.audioPlayer.removeEventListener('error', testError);
-                                resolve(true);
-                            };
-                            const testError = () => {
-                                this.audioPlayer.removeEventListener('loadedmetadata', testLoad);
-                                this.audioPlayer.removeEventListener('error', testError);
-                                reject(new Error('Direct load failed'));
-                            };
-                            this.audioPlayer.addEventListener('loadedmetadata', testLoad);
-                            this.audioPlayer.addEventListener('error', testError);
-                            this.audioPlayer.load();
-                        });
-                    },
+                    // Only use GitHub raw URL method
+                    const repoUrl = window.location.hostname.includes('github.io') ? 
+                        window.location.hostname.replace('.github.io', '') : 'Jri-creator/jri_site';
                     
-                    // Method 3: Try with .mp3 extension appended
-                    async () => {
-                        this.audioPlayer.src = `https://raw.githubusercontent.com/Jri-creator/jri_site/refs/heads/main/${track.filename}`;
-                        return new Promise((resolve, reject) => {
-                            const testLoad = () => {
-                                this.audioPlayer.removeEventListener('loadedmetadata', testLoad);
-                                this.audioPlayer.removeEventListener('error', testError);
-                                resolve(true);
-                            };
-                            const testError = () => {
-                                this.audioPlayer.removeEventListener('loadedmetadata', testLoad);
-                                this.audioPlayer.removeEventListener('error', testError);
-                                reject(new Error('MP3 extension load failed'));
-                            };
-                            this.audioPlayer.addEventListener('loadedmetadata', testLoad);
-                            this.audioPlayer.addEventListener('error', testError);
-                            this.audioPlayer.load();
-                        });
-                    }
-                ];
-                
-                // Try each method in sequence
-                for (let i = 0; i < attempts.length; i++) {
-                    try {
-                        console.log(`Trying audio load method ${i + 1} for ${track.filename}`);
-                        await attempts[i]();
-                        console.log(`Audio load method ${i + 1} succeeded for ${track.filename}`);
-                        return;
-                    } catch (error) {
-                        console.log(`Audio load method ${i + 1} failed for ${track.filename}:`, error.message);
-                        if (i === attempts.length - 1) {
-                            console.error('All audio load methods failed for', track.filename);
-                            this.showError(`Cannot load audio file: ${track.filename}`);
-                        }
-                    }
+                    this.audioPlayer.src = `https://raw.githubusercontent.com/${repoUrl}/main/${track.filename}`;
+                    this.audioPlayer.load();
+                    
+                    console.log(`Audio source set to: ${this.audioPlayer.src}`);
+                    
+                } catch (error) {
+                    console.error('Error loading audio file:', error);
+                    this.showError(`Cannot load audio file: ${track.filename}`);
                 }
             }
             
@@ -531,17 +502,29 @@
                     this.playButton.textContent = 'Play';
                     this.isPlaying = false;
                 } else {
-                    this.audioPlayer.play().catch(e => console.log('Playback failed:', e));
-                    this.playButton.textContent = 'Pause';
-                    this.isPlaying = true;
+                    const playPromise = this.audioPlayer.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            this.playButton.textContent = 'Pause';
+                            this.isPlaying = true;
+                        }).catch(e => {
+                            console.log('Playback failed:', e);
+                            if (!this.hasUserInteracted) {
+                                this.showError('Please click to start playback (browser autoplay policy)');
+                            }
+                        });
+                    }
                 }
                 this.updateDocumentTitle();
             }
             
             nextTrack() {
                 this.loadTrack(this.currentTrackIndex + 1);
-                if (this.isPlaying) {
-                    this.audioPlayer.play().catch(e => console.log('Playback failed:', e));
+                if (this.isPlaying && this.hasUserInteracted) {
+                    // Delay to ensure new track is loaded
+                    setTimeout(() => {
+                        this.audioPlayer.play().catch(e => console.log('Auto-play failed:', e));
+                    }, 100);
                 }
             }
             
@@ -565,6 +548,7 @@
             }
             
             formatTime(seconds) {
+                if (isNaN(seconds)) return '0:00';
                 seconds = Math.floor(seconds);
                 const minutes = Math.floor(seconds / 60);
                 seconds = seconds % 60;
@@ -582,31 +566,48 @@
             updateDocumentTitle() {
                 if (this.tracks.length > 0) {
                     const track = this.tracks[this.currentTrackIndex];
-                    const title = this.isPlaying ? 
-                        ` ${track.title} - Jri Radio` : 
-                        `Paused - Jri Radio`;
+                    const baseTitle = this.isPlaying ? 
+                        `♪ ${track.title} - ${track.artist}` : 
+                        `⏸ ${track.title} - ${track.artist}`;
                     
-                    if (this.scrollEnabled && title.length > 15) {
-                        this.startTitleScroll(title);
+                    if (this.scrollEnabled && baseTitle.length > 40) {
+                        this.startTitleScroll(baseTitle);
                     } else {
-                        document.title = title;
+                        document.title = baseTitle;
+                        if (this.titleInterval) {
+                            clearInterval(this.titleInterval);
+                            this.titleInterval = null;
+                        }
                     }
                 } else {
                     document.title = 'Jri Radio';
                 }
             }
             
-            startTitleScroll(title) {
-                // Simple title scrolling implementation
-                if (this.titleInterval) clearInterval(this.titleInterval);
+            startTitleScroll(fullTitle) {
+                if (this.titleInterval) {
+                    clearInterval(this.titleInterval);
+                }
                 
                 let position = 0;
-                const scrollText = title + ' | ';
+                const maxLength = 60; // Maximum title length before scrolling
+                
+                if (fullTitle.length <= maxLength) {
+                    document.title = fullTitle;
+                    return;
+                }
+                
+                const scrollText = fullTitle + ' • '; // Add separator
                 
                 this.titleInterval = setInterval(() => {
-                    document.title = scrollText.substring(position) + scrollText.substring(0, position);
-                    position = (position + 1) % scrollText.length;
-                }, 200);
+                    const displayText = scrollText.substring(position, position + maxLength);
+                    document.title = displayText;
+                    
+                    position++;
+                    if (position >= scrollText.length) {
+                        position = 0;
+                    }
+                }, 300); // Slower scroll speed
             }
             
             toggleTheme() {
@@ -619,6 +620,7 @@
             toggleScroll() {
                 this.scrollEnabled = !this.scrollEnabled;
                 this.scrollToggle.textContent = this.scrollEnabled ? 'Tab Scroll On' : 'Tab Scroll Off';
+                localStorage.setItem('jriRadioScrollEnabled', this.scrollEnabled);
                 
                 if (!this.scrollEnabled && this.titleInterval) {
                     clearInterval(this.titleInterval);
