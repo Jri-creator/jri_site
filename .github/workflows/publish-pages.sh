@@ -161,16 +161,6 @@ create_index_html() {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jri Radio</title>
-    
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-FWE0SHK7D7"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', 'G-FWE0SHK7D7');
-    </script>
-    
     <style>
         :root {
             --bg-color: #74b9ff;
@@ -712,8 +702,8 @@ create_index_html() {
                 if (this.tracks.length > 0) {
                     const track = this.tracks[this.currentTrackIndex];
                     const baseTitle = this.isPlaying ? 
-                        `♪ ${track.title} - ${track.artist}` : 
-                        `⏸ ${track.title} - ${track.artist}`;
+                        ` ${track.title} - ${track.artist}` : 
+                        ` ${track.title} - ${track.artist}`;
                     document.title = baseTitle;
                 } else {
                     document.title = 'Jri Radio';
@@ -801,6 +791,7 @@ main() {
         echo "📁 Site files created in: $SITE_DIR/"
         echo ""
         echo "Next steps:"
+        echo "Only do this is you haven't done it already!"
         echo "1. Enable GitHub Pages in your repository settings"
         echo "2. Set source to 'Deploy from a branch' and select 'main' (or 'master') branch, /site folder"
         echo "3. Your Jri Radio site will be available at your GitHub Pages URL"
