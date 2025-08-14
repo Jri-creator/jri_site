@@ -633,7 +633,7 @@ create_index_html() {
                     
                     // Method 3: Try with .mp3 extension appended
                     async () => {
-                        this.audioPlayer.src = `./${track.filename}`;
+                        this.audioPlayer.src = `https://raw.githubusercontent.com/Jri-creator/jri_site/refs/heads/main/${track.filename}`;
                         return new Promise((resolve, reject) => {
                             const testLoad = () => {
                                 this.audioPlayer.removeEventListener('loadedmetadata', testLoad);
