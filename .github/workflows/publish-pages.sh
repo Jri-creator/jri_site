@@ -633,7 +633,7 @@ create_index_html() {
                     
                     // Method 3: Try with .mp3 extension appended
                     async () => {
-                        this.audioPlayer.src = `./${track.filename}.mp3`;
+                        this.audioPlayer.src = `./${track.filename}`;
                         return new Promise((resolve, reject) => {
                             const testLoad = () => {
                                 this.audioPlayer.removeEventListener('loadedmetadata', testLoad);
