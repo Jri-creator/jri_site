@@ -1047,10 +1047,9 @@ create_player_html() {
     </script>
 </body>
 </html>
+EOF
 
-    EOF
-
-    echo "✅ Created optimized player.html for GitHub Pages"
+    echo "✅ Created optimized index.html for GitHub Pages"
 }
 
 
