@@ -1584,7 +1584,7 @@ create_player_html() {
             updateDocumentTitle() {
                 if (this.tracks.length > 0 && this.currentTrackIndex >= 0) {
                     const track = this.tracks[this.currentTrackIndex];
-                    document.title = `${this.isPlaying ? '▶' : '❚❚'} ${track.title} - ${track.artist} | Jri Player`;
+                    document.title = `${this.isPlaying ? '' : ''} ${track.title} - ${track.artist} | Jri Player`;
                 } else {
                     document.title = 'Jri Music Player';
                 }
