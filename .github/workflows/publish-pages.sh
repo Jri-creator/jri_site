@@ -1684,6 +1684,7 @@ main() {
         extract_metadata
         get_commit_date
         create_index_html
+        create_player_html
         setup_github_pages
         
         echo ""
