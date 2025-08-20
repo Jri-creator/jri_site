@@ -12,8 +12,8 @@ SITE_DIR="site"
 FILECOUNT_FILE="$SITE_DIR/filecount.txt"
 FILEDATA_FILE="$SITE_DIR/filedata.txt"
 DATE_FILE="$SITE_DIR/date.txt"
-INDEX_FILE="$SITE_DIR/index.html"
-PLAYER_FILE="$SITE_DIR/player.html"
+RADIO_FILE="$SITE_DIR/index.html"      # Radio interface (main page)
+PLAYER_FILE="$SITE_DIR/player.html"    # Player interface
 
 # Create site directory if it doesn't exist
 mkdir -p "$SITE_DIR"
@@ -119,27 +119,6 @@ extract_metadata() {
     echo "✅ Metadata extraction complete, saved to $FILEDATA_FILE"
 }
 
-# Function to copy .jlres3 files as .mp3 for web playback
-copy_audio_files() {
-    echo "🎵 Copying .jlres3 files as .mp3 for web playback..."
-    
-    local copied=0
-    
-    # Find all .jlres3 files and copy them with .mp3 extension to site directory
-    while IFS= read -r -d '' jlres3_file; do
-        local filename=$(basename "$jlres3_file")
-        local target_file="$SITE_DIR/${filename}.mp3"
-        
-        # Copy the file with .mp3 extension for web playback
-        cp "$jlres3_file" "$target_file"
-        copied=$((copied + 1))
-        
-        echo "Copied: $filename → ${filename}.mp3"
-        
-    done < <(find . -name "*.jlres3" -type f -print0)
-    
-    echo "✅ Copied $copied audio files for web playback"
-}
 # Function to get commit date
 get_commit_date() {
     echo "📅 Getting commit date..."
@@ -151,11 +130,606 @@ get_commit_date() {
     echo "✅ Commit date saved to $DATE_FILE: $commit_date"
 }
 
+# Function to create optimized radio.html (now index.html) for GitHub Pages
+create_radio_html() {
+    echo "🌐 Creating/updating index.html (Radio) for GitHub Pages..."
+    
+    cat > "$RADIO_FILE" << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jri Radio</title>
+    <style>
+        :root {
+            --bg-color: #74b9ff;
+            --container-bg: #fff;
+            --text-color: #333;
+            --secondary-text: #777;
+            --light-text: #999;
+            --play-button-bg: #4CAF50;
+            --play-button-hover: #45a049;
+            --next-button-bg: #2196F3;
+            --next-button-hover: #0b7dda;
+            --progress-bg: #ddd;
+            --progress-fill: #4CAF50;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --error-bg: #ffebee;
+            --error-border: #f44336;
+            --error-text: #c62828;
+        }
+        
+        body.dark-mode {
+            --bg-color: #003060;
+            --container-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --secondary-text: #b0b0b0;
+            --light-text: #909090;
+            --play-button-bg: #388e3c;
+            --play-button-hover: #2e7d32;
+            --next-button-bg: #1976d2;
+            --next-button-hover: #1565c0;
+            --progress-bg: #424242;
+            --progress-fill: #4CAF50;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --error-bg: #2d1b1b;
+            --error-border: #d32f2f;
+            --error-text: #ef5350;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        .player-container {
+            background-color: var(--container-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px var(--shadow-color);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        
+        .track-info {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        
+        .cover-art {
+            width: 200px;
+            height: 200px;
+            background-color: #333;
+            margin-right: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+        
+        .cover-art img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+        
+        .track-details {
+            flex: 1;
+        }
+        
+        .track-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .track-artist {
+            font-size: 18px;
+            color: var(--secondary-text);
+            margin-bottom: 15px;
+        }
+        
+        .controls {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+        
+        .play-button, .next-button {
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        
+        .play-button {
+            background-color: var(--play-button-bg);
+            min-width: 100px;
+        }
+        
+        .next-button {
+            background-color: var(--next-button-bg);
+        }
+        
+        .play-button:hover {
+            background-color: var(--play-button-hover);
+        }
+        
+        .next-button:hover {
+            background-color: var(--next-button-hover);
+        }
+        
+        .progress-container {
+            height: 8px;
+            background-color: var(--progress-bg);
+            border-radius: 4px;
+            margin: 10px 0;
+            width: 100%;
+            cursor: pointer;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--progress-fill);
+            border-radius: 4px;
+            width: 0;
+            transition: width 0.1s linear;
+        }
+        
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: var(--secondary-text);
+            margin-top: 5px;
+        }
+        
+        .loading-indicator {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: var(--secondary-text);
+        }
+        
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--secondary-text);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-controls {
+            display: flex;
+            align-items: center;
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            margin-left: 15px;
+        }
+        
+        .volume-control input[type="range"] {
+            width: 100px;
+            height: 6px;
+            -webkit-appearance: none;
+            background: var(--progress-bg);
+            border-radius: 3px;
+            outline: none;
+            margin: 0 10px;
+        }
+        
+        .error-message {
+            background-color: var(--error-bg);
+            border: 1px solid var(--error-border);
+            color: var(--error-text);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .player-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .player-link:hover {
+            text-decoration: underline;
+        }
+        
+        #audio-player {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Jri Radio</h1>
+        <div class="header-controls">
+            <button id="theme-toggle" class="theme-toggle">Dark Mode</button>
+        </div>
+    </div>
+    
+    <div class="player-container">
+        <div id="loading" class="loading-indicator">Loading music library...</div>
+        
+        <div id="error-display" class="error-message" style="display: none;">
+            Unable to load music files. This GitHub Pages version requires the files to be properly configured.
+        </div>
+        
+        <div id="player-ui" style="display: none;">
+            <div class="track-info">
+                <div class="cover-art">
+                    <img id="cover-image" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" alt="Album Art">
+                </div>
+                <div class="track-details">
+                    <div class="track-title" id="track-title">Loading...</div>
+                    <div class="track-artist" id="track-artist">-</div>
+                </div>
+            </div>
+            
+            <audio id="audio-player" controls></audio>
+            
+            <div class="progress-container" id="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            
+            <div class="time-display">
+                <span id="current-time">0:00</span>
+                <span id="total-time">0:00</span>
+            </div>
+            
+            <div class="controls">
+                <button class="play-button" id="play-button">Play</button>
+                <button class="next-button" id="next-button">Next Track</button>
+                <div class="volume-control">
+                    <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1">
+                </div>
+            </div>
+            
+            <a href="player.html" class="player-link">Open Full Music Player →</a>
+        </div>
+    </div>
+
+    <script>
+        // GitHub Pages optimized version of Jri Radio
+        class JriRadioPlayer {
+            constructor() {
+                this.audioPlayer = document.getElementById('audio-player');
+                this.playButton = document.getElementById('play-button');
+                this.nextButton = document.getElementById('next-button');
+                this.coverImage = document.getElementById('cover-image');
+                this.trackTitle = document.getElementById('track-title');
+                this.trackArtist = document.getElementById('track-artist');
+                this.progressBar = document.getElementById('progress-bar');
+                this.progressContainer = document.getElementById('progress-container');
+                this.currentTimeDisplay = document.getElementById('current-time');
+                this.totalTimeDisplay = document.getElementById('total-time');
+                this.loadingIndicator = document.getElementById('loading');
+                this.playerUI = document.getElementById('player-ui');
+                this.errorDisplay = document.getElementById('error-display');
+                this.volumeSlider = document.getElementById('volume-slider');
+                this.themeToggle = document.getElementById('theme-toggle');
+                
+                this.tracks = [];
+                this.currentTrackIndex = 0;
+                this.isPlaying = false;
+                this.hasUserInteracted = false;
+                
+                this.init();
+                
+                // Track user interaction for autoplay
+                document.addEventListener('click', () => {
+                    this.hasUserInteracted = true;
+                }, { once: true });
+                
+                document.addEventListener('keydown', () => {
+                    this.hasUserInteracted = true;
+                }, { once: true });
+            }
+            
+            async init() {
+                this.setupEventListeners();
+                await this.loadTrackData();
+                this.loadTrack(0);
+                this.loadSavedSettings();
+            }
+            
+            loadSavedSettings() {
+                // Load saved volume
+                const savedVolume = localStorage.getItem('jriRadioVolume');
+                if (savedVolume) {
+                    this.volumeSlider.value = savedVolume;
+                    this.audioPlayer.volume = savedVolume;
+                }
+                
+                // Load saved theme
+                const isDarkMode = localStorage.getItem('jriRadioDarkMode') === 'true';
+                if (isDarkMode) {
+                    document.body.classList.add('dark-mode');
+                    this.themeToggle.textContent = 'Light Mode';
+                }
+            }
+            
+            setupEventListeners() {
+                this.playButton.addEventListener('click', () => this.togglePlay());
+                this.nextButton.addEventListener('click', () => this.nextTrack());
+                this.volumeSlider.addEventListener('input', (e) => this.setVolume(e.target.value));
+                this.themeToggle.addEventListener('click', () => this.toggleTheme());
+                
+                this.audioPlayer.addEventListener('timeupdate', () => this.updateProgress());
+                this.audioPlayer.addEventListener('ended', () => this.nextTrack());
+                this.audioPlayer.addEventListener('loadedmetadata', () => this.updateTimeDisplay());
+                this.audioPlayer.addEventListener('canplay', () => this.handleCanPlay());
+                this.audioPlayer.addEventListener('error', (e) => this.handleAudioError(e));
+                
+                this.progressContainer.addEventListener('click', (e) => this.seek(e));
+            }
+            
+            handleCanPlay() {
+                // Auto-start playback if user has interacted and this is the first track
+                if (this.hasUserInteracted && this.currentTrackIndex === 0 && !this.isPlaying) {
+                    this.togglePlay();
+                }
+            }
+            
+            handleAudioError(e) {
+                console.error('Audio error:', e);
+                console.log('Error details:', this.audioPlayer.error);
+                // Try next track on error
+                setTimeout(() => this.nextTrack(), 1000);
+            }
+            
+            async loadTrackData() {
+                try {
+                    // Load file count
+                    const countResponse = await fetch('./filecount.txt');
+                    if (!countResponse.ok) throw new Error('Could not load file count');
+                    const fileCount = parseInt(await countResponse.text());
+                    
+                    if (fileCount === 0) {
+                        this.showError('No music files found.');
+                        return;
+                    }
+                    
+                    // Load file data
+                    const dataResponse = await fetch('./filedata.txt');
+                    if (!dataResponse.ok) throw new Error('Could not load file data');
+                    const fileData = await dataResponse.text();
+                    
+                    // Parse file data
+                    this.parseTrackData(fileData);
+                    
+                    if (this.tracks.length === 0) {
+                        this.showError('No valid music files found.');
+                        return;
+                    }
+                    
+                    // Shuffle tracks for random playback
+                    this.shuffleTracks();
+                    
+                } catch (error) {
+                    console.error('Error loading track data:', error);
+                    this.showError('Error loading music library.');
+                }
+            }
+            
+            parseTrackData(data) {
+                // Parse format: (filename=title=artist=imgdata)
+                const lines = data.trim().split('\n');
+                this.tracks = [];
+                
+                for (const line of lines) {
+                    if (line.startsWith('(') && line.endsWith(')')) {
+                        const content = line.slice(1, -1); // Remove parentheses
+                        const parts = content.split('=');
+                        
+                        if (parts.length >= 3) {
+                            this.tracks.push({
+                                filename: parts[0],
+                                title: parts[1].replace(/_EQUAL_/g, '='),
+                                artist: parts[2].replace(/_EQUAL_/g, '='),
+                                image: parts[3] && parts[3] !== 'none' ? parts[3] : null
+                            });
+                        }
+                    }
+                }
+            }
+            
+            shuffleTracks() {
+                for (let i = this.tracks.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [this.tracks[i], this.tracks[j]] = [this.tracks[j], this.tracks[i]];
+                }
+            }
+            
+            loadTrack(index) {
+                if (index >= this.tracks.length) {
+                    this.shuffleTracks();
+                    index = 0;
+                }
+                
+                this.currentTrackIndex = index;
+                const track = this.tracks[index];
+                
+                // Load audio file using GitHub raw URL
+                this.loadAudioFile(track);
+                
+                this.trackTitle.textContent = track.title;
+                this.trackArtist.textContent = track.artist;
+                
+                if (track.image) {
+                    this.coverImage.src = track.image;
+                } else {
+                    this.coverImage.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+                }
+                
+                this.updateDocumentTitle();
+                this.showPlayer();
+            }
+            
+            async loadAudioFile(track) {
+                try {
+                    console.log(`Loading audio file: ${track.filename}`);
+                    
+                    // Only use GitHub raw URL method
+                    const repoUrl = window.location.hostname.includes('github.io') ? 
+                        window.location.hostname.replace('.github.io', '') : 'Jri-creator/jri_site';
+                    
+                    this.audioPlayer.src = `https://raw.githubusercontent.com/Jri-creator/jri_site/refs/heads/main/${track.filename}`;
+                    this.audioPlayer.load();
+                    
+                    console.log(`Audio source set to: ${this.audioPlayer.src}`);
+                    
+                } catch (error) {
+                    console.error('Error loading audio file:', error);
+                    this.showError(`Cannot load audio file: ${track.filename}`);
+                }
+            }
+            
+            showPlayer() {
+                this.loadingIndicator.style.display = 'none';
+                this.errorDisplay.style.display = 'none';
+                this.playerUI.style.display = 'block';
+            }
+            
+            showError(message) {
+                this.loadingIndicator.style.display = 'none';
+                this.playerUI.style.display = 'none';
+                this.errorDisplay.textContent = message;
+                this.errorDisplay.style.display = 'block';
+            }
+            
+            togglePlay() {
+                if (this.isPlaying) {
+                    this.audioPlayer.pause();
+                    this.playButton.textContent = 'Play';
+                    this.isPlaying = false;
+                } else {
+                    const playPromise = this.audioPlayer.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            this.playButton.textContent = 'Pause';
+                            this.isPlaying = true;
+                        }).catch(e => {
+                            console.log('Playback failed:', e);
+                            if (!this.hasUserInteracted) {
+                                this.showError('Please click to start playback (browser autoplay policy)');
+                            }
+                        });
+                    }
+                }
+                this.updateDocumentTitle();
+            }
+            
+            nextTrack() {
+                this.loadTrack(this.currentTrackIndex + 1);
+                if (this.isPlaying && this.hasUserInteracted) {
+                    // Delay to ensure new track is loaded
+                    setTimeout(() => {
+                        this.audioPlayer.play().catch(e => console.log('Auto-play failed:', e));
+                    }, 100);
+                }
+            }
+            
+            setVolume(volume) {
+                this.audioPlayer.volume = volume;
+                localStorage.setItem('jriRadioVolume', volume);
+            }
+            
+            updateProgress() {
+                if (this.audioPlayer.duration) {
+                    const progress = (this.audioPlayer.currentTime / this.audioPlayer.duration) * 100;
+                    this.progressBar.style.width = `${progress}%`;
+                    this.currentTimeDisplay.textContent = this.formatTime(this.audioPlayer.currentTime);
+                }
+            }
+            
+            updateTimeDisplay() {
+                if (this.audioPlayer.duration) {
+                    this.totalTimeDisplay.textContent = this.formatTime(this.audioPlayer.duration);
+                }
+            }
+            
+            formatTime(seconds) {
+                if (isNaN(seconds)) return '0:00';
+                seconds = Math.floor(seconds);
+                const minutes = Math.floor(seconds / 60);
+                seconds = seconds % 60;
+                return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+            
+            seek(e) {
+                if (this.audioPlayer.duration) {
+                    const rect = this.progressContainer.getBoundingClientRect();
+                    const percent = (e.clientX - rect.left) / rect.width;
+                    this.audioPlayer.currentTime = percent * this.audioPlayer.duration;
+                }
+            }
+            
+            updateDocumentTitle() {
+                if (this.tracks.length > 0) {
+                    const track = this.tracks[this.currentTrackIndex];
+                    const baseTitle = this.isPlaying ? 
+                        ` ${track.title} - ${track.artist}` : 
+                        ` ${track.title} - ${track.artist}`;
+                    document.title = baseTitle;
+                } else {
+                    document.title = 'Jri Radio';
+                }
+            }
+            
+            toggleTheme() {
+                document.body.classList.toggle('dark-mode');
+                const isDark = document.body.classList.contains('dark-mode');
+                this.themeToggle.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+                localStorage.setItem('jriRadioDarkMode', isDark);
+            }
+        }
+        
+        // Initialize player when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new JriRadioPlayer();
+        });
+    </script>
+</body>
+</html>
+EOF
+
+    echo "✅ Created optimized index.html (Radio) for GitHub Pages"
+}
+
 # Function to create optimized player.html for GitHub Pages
 create_player_html() {
     echo "🌐 Creating/updating player.html for GitHub Pages..."
-    cat > "$INDEX_FILE" << 'EOF'
-
+    
+    cat > "$PLAYER_FILE" << 'EOF'
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -537,6 +1111,19 @@ create_player_html() {
             text-align: center;
         }
         
+        .radio-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .radio-link:hover {
+            text-decoration: underline;
+        }
+        
         #audio-player {
             display: none;
         }
@@ -627,6 +1214,8 @@ create_player_html() {
                     <div class="keyboard-hint">
                         Keyboard shortcuts: Space = Play/Pause, ←/→ = Seek, P = Previous, N = Next
                     </div>
+                    
+                    <a href="index.html" class="radio-link">← Back to Radio</a>
                 </div>
             </div>
         </div>
@@ -772,21 +1361,21 @@ create_player_html() {
                             artist: "Sample Artist",
                             album: "Sample Album",
                             filename: "https://filesamples.com/samples/audio/mp3/Sample_MP3_700KB.mp3",
-                            image: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzIxOTZGMyIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4Ij5TYW1wbGUgMTwvdGV4dD48L3N2Zz4="
+                                                        image: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzIxOTZGMyIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4Ij5TYW1wbGUgMTwvdGV4dD48L3N2Zz4="
                         },
                         {
                             title: "Sample Track 2",
                             artist: "Sample Artist",
                             album: "Sample Album",
                             filename: "https://filesamples.com/samples/audio/mp3/Sample_MP3_700KB.mp3",
-                            image: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzRDQThGNCIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4Ij5TYW1wbGUgMjwvdGV4dD48L3N2Zz4="
+                            image: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIi hoZWlnaHQ9IjIwMCIgZmlsbD0iIzRDQThGNCIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4Ij5TYW1wbGUgMjwvdGV4dD48L3N2Zz4="
                         },
                         {
                             title: "Sample Track 3",
                             artist: "Another Artist",
                             album: "Different Album",
                             filename: "https://filesamples.com/samples/audio/mp3/Sample_MP3_700KB.mp3",
-                            image: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI0Y0NDMzNiIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4Ij5TYW1wbGUgMzwvdGV4dD48L3N2Zz4="
+                            image: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI0Y0NDMzNiIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU="
                         }
                     ];
                 }
@@ -886,7 +1475,7 @@ create_player_html() {
                 if (track.image) {
                     this.coverImage.src = track.image;
                 } else {
-                    this.coverImage.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzMzMyIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjY2IiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMjQiPk5vIEltYWdlPC90ZXh0Pjwvc3ZnPg==';
+                    this.coverImage.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMjAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzMzMyIvPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxs="#666" font-family="Arial, sans-serif" font-size="24">No Image</text></svg>';
                 }
                 
                 // Load and play audio
@@ -1052,588 +1641,6 @@ EOF
     echo "✅ Created optimized player.html for GitHub Pages"
 }
 
-
-# Function to create optimized index.html for GitHub Pages
-create_index_html() {
-    echo "🌐 Creating/updating index.html for GitHub Pages..."
-    
-    cat > "$PLAYER_FILE" << 'EOF'
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jri Radio</title>
-    <style>
-        :root {
-            --bg-color: #74b9ff;
-            --container-bg: #fff;
-            --text-color: #333;
-            --secondary-text: #777;
-            --light-text: #999;
-            --play-button-bg: #4CAF50;
-            --play-button-hover: #45a049;
-            --next-button-bg: #2196F3;
-            --next-button-hover: #0b7dda;
-            --progress-bg: #ddd;
-            --progress-fill: #4CAF50;
-            --shadow-color: rgba(0, 0, 0, 0.1);
-            --error-bg: #ffebee;
-            --error-border: #f44336;
-            --error-text: #c62828;
-        }
-        
-        body.dark-mode {
-            --bg-color: #003060;
-            --container-bg: #1e1e1e;
-            --text-color: #e0e0e0;
-            --secondary-text: #b0b0b0;
-            --light-text: #909090;
-            --play-button-bg: #388e3c;
-            --play-button-hover: #2e7d32;
-            --next-button-bg: #1976d2;
-            --next-button-hover: #1565c0;
-            --progress-bg: #424242;
-            --progress-fill: #4CAF50;
-            --shadow-color: rgba(0, 0, 0, 0.3);
-            --error-bg: #2d1b1b;
-            --error-border: #d32f2f;
-            --error-text: #ef5350;
-        }
-        
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            transition: background-color 0.3s, color 0.3s;
-        }
-        
-        .player-container {
-            background-color: var(--container-bg);
-            border-radius: 8px;
-            box-shadow: 0 2px 10px var(--shadow-color);
-            padding: 20px;
-            margin-bottom: 20px;
-            transition: background-color 0.3s, box-shadow 0.3s;
-        }
-        
-        .track-info {
-            display: flex;
-            margin-bottom: 20px;
-        }
-        
-        .cover-art {
-            width: 200px;
-            height: 200px;
-            background-color: #333;
-            margin-right: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            border-radius: 8px;
-        }
-        
-        .cover-art img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: cover;
-        }
-        
-        .track-details {
-            flex: 1;
-        }
-        
-        .track-title {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        
-        .track-artist {
-            font-size: 18px;
-            color: var(--secondary-text);
-            margin-bottom: 15px;
-        }
-        
-        .controls {
-            display: flex;
-            align-items: center;
-            margin-bottom: 20px;
-            gap: 10px;
-        }
-        
-        .play-button, .next-button {
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            text-align: center;
-            font-size: 16px;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: background-color 0.2s;
-        }
-        
-        .play-button {
-            background-color: var(--play-button-bg);
-            min-width: 100px;
-        }
-        
-        .next-button {
-            background-color: var(--next-button-bg);
-        }
-        
-        .play-button:hover {
-            background-color: var(--play-button-hover);
-        }
-        
-        .next-button:hover {
-            background-color: var(--next-button-hover);
-        }
-        
-        .progress-container {
-            height: 8px;
-            background-color: var(--progress-bg);
-            border-radius: 4px;
-            margin: 10px 0;
-            width: 100%;
-            cursor: pointer;
-        }
-        
-        .progress-bar {
-            height: 100%;
-            background-color: var(--progress-fill);
-            border-radius: 4px;
-            width: 0;
-            transition: width 0.1s linear;
-        }
-        
-        .time-display {
-            display: flex;
-            justify-content: space-between;
-            font-size: 14px;
-            color: var(--secondary-text);
-            margin-top: 5px;
-        }
-        
-        .loading-indicator {
-            text-align: center;
-            padding: 20px;
-            font-style: italic;
-            color: var(--secondary-text);
-        }
-        
-        .theme-toggle {
-            background: none;
-            border: none;
-            color: var(--secondary-text);
-            cursor: pointer;
-            font-size: 14px;
-            padding: 5px 10px;
-            border-radius: 4px;
-            margin-left: 10px;
-        }
-        
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .header-controls {
-            display: flex;
-            align-items: center;
-        }
-        
-        .volume-control {
-            display: flex;
-            align-items: center;
-            margin-left: 15px;
-        }
-        
-        .volume-control input[type="range"] {
-            width: 100px;
-            height: 6px;
-            -webkit-appearance: none;
-            background: var(--progress-bg);
-            border-radius: 3px;
-            outline: none;
-            margin: 0 10px;
-        }
-        
-        .error-message {
-            background-color: var(--error-bg);
-            border: 1px solid var(--error-border);
-            color: var(--error-text);
-            padding: 15px;
-            border-radius: 8px;
-            margin: 20px 0;
-        }
-        
-        #audio-player {
-            display: none;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <h1>Jri Radio</h1>
-        <div class="header-controls">
-            <button id="theme-toggle" class="theme-toggle">Dark Mode</button>
-        </div>
-    </div>
-    
-    <div class="player-container">
-        <div id="loading" class="loading-indicator">Loading music library...</div>
-        
-        <div id="error-display" class="error-message" style="display: none;">
-            Unable to load music files. This GitHub Pages version requires the files to be properly configured.
-        </div>
-        
-        <div id="player-ui" style="display: none;">
-            <div class="track-info">
-                <div class="cover-art">
-                    <img id="cover-image" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=" alt="Album Art">
-                </div>
-                <div class="track-details">
-                    <div class="track-title" id="track-title">Loading...</div>
-                    <div class="track-artist" id="track-artist">-</div>
-                </div>
-            </div>
-            
-            <audio id="audio-player" controls></audio>
-            
-            <div class="progress-container" id="progress-container">
-                <div class="progress-bar" id="progress-bar"></div>
-            </div>
-            
-            <div class="time-display">
-                <span id="current-time">0:00</span>
-                <span id="total-time">0:00</span>
-            </div>
-            
-            <div class="controls">
-                <button class="play-button" id="play-button">Play</button>
-                <button class="next-button" id="next-button">Next Track</button>
-                <div class="volume-control">
-                    <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="1">
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // GitHub Pages optimized version of Jri Radio
-        class JriRadioPlayer {
-            constructor() {
-                this.audioPlayer = document.getElementById('audio-player');
-                this.playButton = document.getElementById('play-button');
-                this.nextButton = document.getElementById('next-button');
-                this.coverImage = document.getElementById('cover-image');
-                this.trackTitle = document.getElementById('track-title');
-                this.trackArtist = document.getElementById('track-artist');
-                this.progressBar = document.getElementById('progress-bar');
-                this.progressContainer = document.getElementById('progress-container');
-                this.currentTimeDisplay = document.getElementById('current-time');
-                this.totalTimeDisplay = document.getElementById('total-time');
-                this.loadingIndicator = document.getElementById('loading');
-                this.playerUI = document.getElementById('player-ui');
-                this.errorDisplay = document.getElementById('error-display');
-                this.volumeSlider = document.getElementById('volume-slider');
-                this.themeToggle = document.getElementById('theme-toggle');
-                
-                this.tracks = [];
-                this.currentTrackIndex = 0;
-                this.isPlaying = false;
-                this.hasUserInteracted = false;
-                
-                this.init();
-                
-                // Track user interaction for autoplay
-                document.addEventListener('click', () => {
-                    this.hasUserInteracted = true;
-                }, { once: true });
-                
-                document.addEventListener('keydown', () => {
-                    this.hasUserInteracted = true;
-                }, { once: true });
-            }
-            
-            async init() {
-                this.setupEventListeners();
-                await this.loadTrackData();
-                this.loadTrack(0);
-                this.loadSavedSettings();
-            }
-            
-            loadSavedSettings() {
-                // Load saved volume
-                const savedVolume = localStorage.getItem('jriRadioVolume');
-                if (savedVolume) {
-                    this.volumeSlider.value = savedVolume;
-                    this.audioPlayer.volume = savedVolume;
-                }
-                
-                // Load saved theme
-                const isDarkMode = localStorage.getItem('jriRadioDarkMode') === 'true';
-                if (isDarkMode) {
-                    document.body.classList.add('dark-mode');
-                    this.themeToggle.textContent = 'Light Mode';
-                }
-            }
-            
-            setupEventListeners() {
-                this.playButton.addEventListener('click', () => this.togglePlay());
-                this.nextButton.addEventListener('click', () => this.nextTrack());
-                this.volumeSlider.addEventListener('input', (e) => this.setVolume(e.target.value));
-                this.themeToggle.addEventListener('click', () => this.toggleTheme());
-                
-                this.audioPlayer.addEventListener('timeupdate', () => this.updateProgress());
-                this.audioPlayer.addEventListener('ended', () => this.nextTrack());
-                this.audioPlayer.addEventListener('loadedmetadata', () => this.updateTimeDisplay());
-                this.audioPlayer.addEventListener('canplay', () => this.handleCanPlay());
-                this.audioPlayer.addEventListener('error', (e) => this.handleAudioError(e));
-                
-                this.progressContainer.addEventListener('click', (e) => this.seek(e));
-            }
-            
-            handleCanPlay() {
-                // Auto-start playback if user has interacted and this is the first track
-                if (this.hasUserInteracted && this.currentTrackIndex === 0 && !this.isPlaying) {
-                    this.togglePlay();
-                }
-            }
-            
-            handleAudioError(e) {
-                console.error('Audio error:', e);
-                console.log('Error details:', this.audioPlayer.error);
-                // Try next track on error
-                setTimeout(() => this.nextTrack(), 1000);
-            }
-            
-            async loadTrackData() {
-                try {
-                    // Load file count
-                    const countResponse = await fetch('./filecount.txt');
-                    if (!countResponse.ok) throw new Error('Could not load file count');
-                    const fileCount = parseInt(await countResponse.text());
-                    
-                    if (fileCount === 0) {
-                        this.showError('No music files found.');
-                        return;
-                    }
-                    
-                    // Load file data
-                    const dataResponse = await fetch('./filedata.txt');
-                    if (!dataResponse.ok) throw new Error('Could not load file data');
-                    const fileData = await dataResponse.text();
-                    
-                    // Parse file data
-                    this.parseTrackData(fileData);
-                    
-                    if (this.tracks.length === 0) {
-                        this.showError('No valid music files found.');
-                        return;
-                    }
-                    
-                    // Shuffle tracks for random playback
-                    this.shuffleTracks();
-                    
-                } catch (error) {
-                    console.error('Error loading track data:', error);
-                    this.showError('Error loading music library.');
-                }
-            }
-            
-            parseTrackData(data) {
-                // Parse format: (filename=title=artist=imgdata)
-                const lines = data.trim().split('\n');
-                this.tracks = [];
-                
-                for (const line of lines) {
-                    if (line.startsWith('(') && line.endsWith(')')) {
-                        const content = line.slice(1, -1); // Remove parentheses
-                        const parts = content.split('=');
-                        
-                        if (parts.length >= 3) {
-                            this.tracks.push({
-                                filename: parts[0],
-                                title: parts[1].replace(/_EQUAL_/g, '='),
-                                artist: parts[2].replace(/_EQUAL_/g, '='),
-                                image: parts[3] && parts[3] !== 'none' ? parts[3] : null
-                            });
-                        }
-                    }
-                }
-            }
-            
-            shuffleTracks() {
-                for (let i = this.tracks.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [this.tracks[i], this.tracks[j]] = [this.tracks[j], this.tracks[i]];
-                }
-            }
-            
-            loadTrack(index) {
-                if (index >= this.tracks.length) {
-                    this.shuffleTracks();
-                    index = 0;
-                }
-                
-                this.currentTrackIndex = index;
-                const track = this.tracks[index];
-                
-                // Load audio file using GitHub raw URL
-                this.loadAudioFile(track);
-                
-                this.trackTitle.textContent = track.title;
-                this.trackArtist.textContent = track.artist;
-                
-                if (track.image) {
-                    this.coverImage.src = track.image;
-                } else {
-                    this.coverImage.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-                }
-                
-                this.updateDocumentTitle();
-                this.showPlayer();
-            }
-            
-            async loadAudioFile(track) {
-                try {
-                    console.log(`Loading audio file: ${track.filename}`);
-                    
-                    // Only use GitHub raw URL method
-                    const repoUrl = window.location.hostname.includes('github.io') ? 
-                        window.location.hostname.replace('.github.io', '') : 'Jri-creator/jri_site';
-                    
-                    this.audioPlayer.src = `https://raw.githubusercontent.com/Jri-creator/jri_site/refs/heads/main/${track.filename}`;
-                    this.audioPlayer.load();
-                    
-                    console.log(`Audio source set to: ${this.audioPlayer.src}`);
-                    
-                } catch (error) {
-                    console.error('Error loading audio file:', error);
-                    this.showError(`Cannot load audio file: ${track.filename}`);
-                }
-            }
-            
-            showPlayer() {
-                this.loadingIndicator.style.display = 'none';
-                this.errorDisplay.style.display = 'none';
-                this.playerUI.style.display = 'block';
-            }
-            
-            showError(message) {
-                this.loadingIndicator.style.display = 'none';
-                this.playerUI.style.display = 'none';
-                this.errorDisplay.textContent = message;
-                this.errorDisplay.style.display = 'block';
-            }
-            
-            togglePlay() {
-                if (this.isPlaying) {
-                    this.audioPlayer.pause();
-                    this.playButton.textContent = 'Play';
-                    this.isPlaying = false;
-                } else {
-                    const playPromise = this.audioPlayer.play();
-                    if (playPromise !== undefined) {
-                        playPromise.then(() => {
-                            this.playButton.textContent = 'Pause';
-                            this.isPlaying = true;
-                        }).catch(e => {
-                            console.log('Playback failed:', e);
-                            if (!this.hasUserInteracted) {
-                                this.showError('Please click to start playback (browser autoplay policy)');
-                            }
-                        });
-                    }
-                }
-                this.updateDocumentTitle();
-            }
-            
-            nextTrack() {
-                this.loadTrack(this.currentTrackIndex + 1);
-                if (this.isPlaying && this.hasUserInteracted) {
-                    // Delay to ensure new track is loaded
-                    setTimeout(() => {
-                        this.audioPlayer.play().catch(e => console.log('Auto-play failed:', e));
-                    }, 100);
-                }
-            }
-            
-            setVolume(volume) {
-                this.audioPlayer.volume = volume;
-                localStorage.setItem('jriRadioVolume', volume);
-            }
-            
-            updateProgress() {
-                if (this.audioPlayer.duration) {
-                    const progress = (this.audioPlayer.currentTime / this.audioPlayer.duration) * 100;
-                    this.progressBar.style.width = `${progress}%`;
-                    this.currentTimeDisplay.textContent = this.formatTime(this.audioPlayer.currentTime);
-                }
-            }
-            
-            updateTimeDisplay() {
-                if (this.audioPlayer.duration) {
-                    this.totalTimeDisplay.textContent = this.formatTime(this.audioPlayer.duration);
-                }
-            }
-            
-            formatTime(seconds) {
-                if (isNaN(seconds)) return '0:00';
-                seconds = Math.floor(seconds);
-                const minutes = Math.floor(seconds / 60);
-                seconds = seconds % 60;
-                return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            }
-            
-            seek(e) {
-                if (this.audioPlayer.duration) {
-                    const rect = this.progressContainer.getBoundingClientRect();
-                    const percent = (e.clientX - rect.left) / rect.width;
-                    this.audioPlayer.currentTime = percent * this.audioPlayer.duration;
-                }
-            }
-            
-            updateDocumentTitle() {
-                if (this.tracks.length > 0) {
-                    const track = this.tracks[this.currentTrackIndex];
-                    const baseTitle = this.isPlaying ? 
-                        ` ${track.title} - ${track.artist}` : 
-                        ` ${track.title} - ${track.artist}`;
-                    document.title = baseTitle;
-                } else {
-                    document.title = 'Jri Radio';
-                }
-            }
-            
-            toggleTheme() {
-                document.body.classList.toggle('dark-mode');
-                const isDark = document.body.classList.contains('dark-mode');
-                this.themeToggle.textContent = isDark ? 'Light Mode' : 'Dark Mode';
-                localStorage.setItem('jriRadioDarkMode', isDark);
-            }
-        }
-        
-        // Initialize player when DOM is loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            new JriRadioPlayer();
-        });
-    </script>
-</body>
-</html>
-EOF
-
-    echo "✅ Created optimized index.html for GitHub Pages"
-}
-
-
 # Function to setup GitHub Pages
 setup_github_pages() {
     echo "📖 Setting up GitHub Pages..."
@@ -1667,8 +1674,6 @@ setup_github_pages() {
     else
         echo "⚠️ No remote 'origin' found. Please add a remote and push manually."
     fi
-    
-    
 }
 
 # Main execution
@@ -1683,7 +1688,7 @@ main() {
     if [ "$(cat $FILECOUNT_FILE)" -gt 0 ]; then
         extract_metadata
         get_commit_date
-        create_index_html
+        create_radio_html
         create_player_html
         setup_github_pages
         
@@ -1695,7 +1700,7 @@ main() {
         echo "📁 Site files created in: $SITE_DIR/"
         echo ""
         echo "Next steps:"
-        echo "Only do this is you haven't done it already!"
+        echo "Only do this if you haven't done it already!"
         echo "1. Enable GitHub Pages in your repository settings"
         echo "2. Set source to 'Deploy from a branch' and select 'main' (or 'master') branch, /site folder"
         echo "3. Your Jri Radio site will be available at your GitHub Pages URL"
