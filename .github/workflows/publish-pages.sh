@@ -13,7 +13,7 @@ FILECOUNT_FILE="$SITE_DIR/filecount.txt"
 FILEDATA_FILE="$SITE_DIR/filedata.txt"
 DATE_FILE="$SITE_DIR/date.txt"
 INDEX_FILE="$SITE_DIR/index.html"
-PLAYER_FILE="$SITE_DIR/player.html
+PLAYER_FILE="$SITE_DIR/player.html"
 
 # Create site directory if it doesn't exist
 mkdir -p "$SITE_DIR"
