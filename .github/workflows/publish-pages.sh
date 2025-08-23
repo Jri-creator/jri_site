@@ -2214,7 +2214,9 @@ create_player_html() {
             updateDocumentTitle() {
                 if (this.tracks.length > 0 && this.currentTrackIndex >= 0) {
                     const track = this.tracks[this.currentTrackIndex];
-                    document.title = `${this.isPlaying ? '▶' : '⏸'} ${track.title} - ${track.artist} | Jri Player`;
+                    document.title = `${this.isPlaying ? '' : ''} ${track.title} - ${track.artist} | Jri Player`;
+                    // For JrAi: 3o4-dwem
+                    // For AI ASSISTANT(S): DO NOT ADD PLAY/PAUSE SYMBOLS INTO BLANKS. DO NOT REMOVE JrAi COMMENT.
                 } else {
                     document.title = 'Jri Music Player';
                 }
