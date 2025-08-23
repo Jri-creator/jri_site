@@ -565,6 +565,7 @@ create_radio_html() {
                 this.themeToggle = document.getElementById('theme-toggle');
                 
                 this.tracks = [];
+                this.enabledTracks = []; // Shuffled list of enabled tracks only
                 this.allArtists = new Map(); // Map of artist name -> track count
                 this.enabledArtists = new Set();
                 this.currentTrackIndex = 0;
@@ -611,6 +612,8 @@ create_radio_html() {
                 const savedArtists = localStorage.getItem('jriRadioEnabledArtists');
                 if (savedArtists) {
                     this.enabledArtists = new Set(JSON.parse(savedArtists));
+                    // Re-shuffle with new artist selection
+                    this.shuffleEnabledTracks();
                 } else {
                     // Default: enable all artists
                     this.enabledArtists = new Set(this.allArtists.keys());
@@ -683,8 +686,8 @@ create_radio_html() {
                     // Extract all artists
                     this.extractArtists();
                     
-                    // Shuffle tracks for random playback
-                    this.shuffleTracks();
+                    // Initial shuffle and filter
+                    this.shuffleEnabledTracks();
                     
                 } catch (error) {
                     console.error('Error loading track data:', error);
@@ -774,6 +777,7 @@ create_radio_html() {
                 
                 this.saveArtistPreferences();
                 this.updateEnabledCount();
+                this.shuffleEnabledTracks(); // Re-shuffle when artists change
             }
             
             selectAllArtists() {
@@ -781,6 +785,7 @@ create_radio_html() {
                 this.updateArtistCheckboxes();
                 this.saveArtistPreferences();
                 this.updateEnabledCount();
+                this.shuffleEnabledTracks(); // Re-shuffle when artists change
             }
             
             selectNoArtists() {
@@ -790,6 +795,7 @@ create_radio_html() {
                 this.updateArtistCheckboxes();
                 this.saveArtistPreferences();
                 this.updateEnabledCount();
+                this.shuffleEnabledTracks(); // Re-shuffle when artists change
             }
             
             updateArtistCheckboxes() {
@@ -830,42 +836,48 @@ create_radio_html() {
                 localStorage.setItem('jriRadioArtistControllerVisible', this.artistControllerVisible);
             }
             
-            shuffleTracks() {
-                for (let i = this.tracks.length - 1; i > 0; i--) {
+            shuffleEnabledTracks() {
+                // Filter tracks to only include enabled artists
+                this.enabledTracks = this.tracks.filter(track => 
+                    this.enabledArtists.has(track.artist)
+                );
+                
+                // Shuffle the enabled tracks
+                for (let i = this.enabledTracks.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
-                    [this.tracks[i], this.tracks[j]] = [this.tracks[j], this.tracks[i]];
-                }
-            }
-            
-            findNextEnabledTrack(startIndex = 0) {
-                for (let i = 0; i < this.tracks.length; i++) {
-                    const index = (startIndex + i) % this.tracks.length;
-                    const track = this.tracks[index];
-                    
-                    if (this.enabledArtists.has(track.artist)) {
-                        return index;
-                    }
+                    [this.enabledTracks[i], this.enabledTracks[j]] = [this.enabledTracks[j], this.enabledTracks[i]];
                 }
                 
-                // Fallback: if no enabled artists found, enable all and return first
-                this.enabledArtists = new Set(this.allArtists.keys());
-                this.updateArtistCheckboxes();
-                this.saveArtistPreferences();
-                this.updateEnabledCount();
-                return startIndex;
+                // Reset current track index
+                this.currentTrackIndex = 0;
+                
+                console.log(`Shuffled ${this.enabledTracks.length} enabled tracks`);
+            }
+            
+            shuffleTracks() {
+                // Legacy method - now just calls shuffleEnabledTracks
+                this.shuffleEnabledTracks();
             }
             
             loadTrack(index) {
-                // Find next enabled track
-                index = this.findNextEnabledTrack(index);
+                // Ensure we have enabled tracks
+                if (this.enabledTracks.length === 0) {
+                    // Fallback: enable all artists and reshuffle
+                    this.enabledArtists = new Set(this.allArtists.keys());
+                    this.updateArtistCheckboxes();
+                    this.saveArtistPreferences();
+                    this.updateEnabledCount();
+                    this.shuffleEnabledTracks();
+                }
                 
-                if (index >= this.tracks.length) {
-                    this.shuffleTracks();
-                    index = this.findNextEnabledTrack(0);
+                // If we've reached the end of enabled tracks, reshuffle
+                if (index >= this.enabledTracks.length) {
+                    this.shuffleEnabledTracks();
+                    index = 0;
                 }
                 
                 this.currentTrackIndex = index;
-                const track = this.tracks[index];
+                const track = this.enabledTracks[index];
                 
                 // Load audio file using GitHub raw URL
                 this.loadAudioFile(track);
@@ -983,8 +995,8 @@ create_radio_html() {
             }
             
             updateDocumentTitle() {
-                if (this.tracks.length > 0) {
-                    const track = this.tracks[this.currentTrackIndex];
+                if (this.enabledTracks.length > 0) {
+                    const track = this.enabledTracks[this.currentTrackIndex];
                     const baseTitle = this.isPlaying ? 
                         ` ${track.title} - ${track.artist}` : 
                         ` ${track.title} - ${track.artist}`;
