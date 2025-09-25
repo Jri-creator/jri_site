@@ -940,31 +940,24 @@
                     this.showMessage('Admin access required!', 'error');
                     return;
                 }
-                if (this.queue.length === 0) {
-                    this.showMessage('No songs in queue to restrict.', 'info');
-                    return;
-                }
                 this.populateRestrictModal();
                 this.restrictModal.classList.add('show');
             }
             populateRestrictModal() {
                 const restrictions = this.getRestrictions();
-
-                this.restrictSongList.innerHTML = this.queue.map((item, index) => {
-                    const currentRestriction = restrictions[item.id] || 'green';
-
+                this.restrictSongList.innerHTML = this.tracks.map((track) => {
+                    const currentRestriction = restrictions[track.filename] || 'green';
                     return `
                         <div class="restrict-song-item">
-                            <div class="restrict-song-title">${item.title}</div>
-                            <div class="restrict-song-artist">${item.artist}</div>
-                            ${item.requester ? `<div class="queue-item-requester">Requested by ${item.requester}</div>` : ''}
+                            <div class="restrict-song-title">${track.title}</div>
+                            <div class="restrict-song-artist">${track.artist}</div>
                             <div class="restrict-options">
                                 <button class="restrict-option red ${currentRestriction === 'red' ? 'active' : ''}"
-                                        data-id="${item.id}" data-level="red">Don't Play</button>
+                                        data-filename="${track.filename}" data-level="red">Don't Play</button>
                                 <button class="restrict-option yellow ${currentRestriction === 'yellow' ? 'active' : ''}"
-                                        data-id="${item.id}" data-level="yellow">Play After Queue</button>
+                                        data-filename="${track.filename}" data-level="yellow">Play After Queue</button>
                                 <button class="restrict-option green ${currentRestriction === 'green' ? 'active' : ''}"
-                                        data-id="${item.id}" data-level="green">Play Normal</button>
+                                        data-filename="${track.filename}" data-level="green">Play Normal</button>
                             </div>
                         </div>
                     `;
@@ -972,10 +965,9 @@
                 // Add event listeners to restriction buttons
                 this.restrictSongList.querySelectorAll('.restrict-option').forEach(btn => {
                     btn.addEventListener('click', (e) => {
-                        const id = e.target.dataset.id;
+                        const filename = e.target.dataset.filename;
                         const level = e.target.dataset.level;
-                        this.applyRestriction(id, level);
-
+                        this.applyRestriction(filename, level);
                         // Update button states
                         const songItem = e.target.closest('.restrict-song-item');
                         songItem.querySelectorAll('.restrict-option').forEach(b => b.classList.remove('active'));
@@ -994,18 +986,15 @@
                     return {};
                 }
             }
-            applyRestriction(id, level) {
+            applyRestriction(filename, level) {
                 const restrictions = this.getRestrictions();
-                restrictions[id] = level;
+                restrictions[filename] = level;
                 this.setStorageItem('restrictedSongs', JSON.stringify(restrictions));
-                this.updateQueueDisplay();
-
                 const levelText = {
                     'red': 'will not play',
                     'yellow': 'will play after queue',
                     'green': 'will play normally'
                 };
-
                 this.showMessage(`Song restriction updated - ${levelText[level]}.`, 'info');
             }
             async loadTrackData() {
@@ -1036,7 +1025,6 @@
             loadFallbackTracks() {
                 // Show critical error message in artwork area
                 this.showCriticalError();
-
                 // Also set empty tracks array
                 this.tracks = [];
                 this.populateSongList();
@@ -1071,8 +1059,9 @@
             }
             populateSongList() {
                 if (!this.songList) return;
+                const restrictions = this.getRestrictions();
                 this.songList.innerHTML = this.tracks.map((track, index) => `
-                    <div class="song-item" data-index="${index}">
+                    <div class="song-item ${restrictions[track.filename] === 'red' ? 'restricted-red' : ''}" data-index="${index}">
                         <div class="song-item-title">${track.title}</div>
                         <div class="song-item-artist">${track.artist}</div>
                     </div>
@@ -1081,7 +1070,13 @@
                 this.songList.querySelectorAll('.song-item').forEach(item => {
                     item.addEventListener('click', () => {
                         const index = parseInt(item.dataset.index);
-                        this.toggleSongSelection(index, item);
+                        const restrictions = this.getRestrictions();
+                        const track = this.tracks[index];
+                        if (restrictions[track.filename] !== 'red') {
+                            this.toggleSongSelection(index, item);
+                        } else {
+                            this.showMessage('This song is restricted and cannot be added.', 'warning');
+                        }
                     });
                 });
             }
@@ -1133,19 +1128,22 @@
                     return;
                 }
                 const userName = this.userNameInput.value.trim();
+                const restrictions = this.getRestrictions();
+                let addedCount = 0;
                 this.selectedSongs.forEach(trackIndex => {
                     const track = this.tracks[trackIndex];
-                    this.queue.push({
-                        ...track,
-                        requester: userName || null,
-                        id: Date.now() + Math.random() + trackIndex
-                    });
+                    if (restrictions[track.filename] !== 'red') {
+                        this.queue.push({
+                            ...track,
+                            requester: userName || null,
+                            id: Date.now() + Math.random() + trackIndex
+                        });
+                        addedCount++;
+                    }
                 });
                 this.updateQueueDisplay();
                 this.closeSongModal();
-                const count = this.selectedSongs.size;
-                this.showMessage(`${count} song${count === 1 ? '' : 's'} added to queue!`, 'success');
-                // Start playing if nothing is playing
+                this.showMessage(`${addedCount} song${addedCount === 1 ? '' : 's'} added to queue!`, 'success');
                 if (!this.isPlaying && this.queue.length > 0) {
                     this.playNextFromQueue();
                 }
@@ -1158,7 +1156,7 @@
                 }
                 const restrictions = this.getRestrictions();
                 this.queueList.innerHTML = this.queue.map((item, index) => {
-                    const restricted = restrictions[item.id];
+                    const restricted = restrictions[item.filename];
                     let restrictedClass = '';
                     if (restricted === 'red') restrictedClass = 'restricted-red';
                     if (restricted === 'yellow') restrictedClass = 'restricted-yellow';
@@ -1187,7 +1185,6 @@
             deleteQueueItem(id) {
                 const initialLength = this.queue.length;
                 this.queue = this.queue.filter(item => item.id != id);
-
                 if (this.queue.length < initialLength) {
                     this.updateQueueDisplay();
                     this.showMessage('Song removed from queue.', 'info');
@@ -1206,8 +1203,14 @@
                 }
             }
             playRandomTrack() {
-                const randomIndex = Math.floor(Math.random() * this.tracks.length);
-                const track = this.tracks[randomIndex];
+                const restrictions = this.getRestrictions();
+                const availableTracks = this.tracks.filter(track => restrictions[track.filename] !== 'red');
+                if (availableTracks.length === 0) {
+                    this.showMessage('No playable tracks available.', 'error');
+                    return;
+                }
+                const randomIndex = Math.floor(Math.random() * availableTracks.length);
+                const track = availableTracks[randomIndex];
                 this.playTrack(track, null);
             }
             playNextFromQueue() {
@@ -1221,8 +1224,7 @@
                 // Find next playable track
                 for (let i = 0; i < this.queue.length; i++) {
                     const item = this.queue[i];
-                    const restriction = restrictions[item.id];
-
+                    const restriction = restrictions[item.filename];
                     if (restriction !== 'red') {
                         nextTrack = item;
                         nextIndex = i;
@@ -1334,9 +1336,7 @@
                     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
                     transition: all 0.3s ease;
                 `;
-
                 document.body.appendChild(messageEl);
-
                 // Fade out and remove
                 setTimeout(() => {
                     messageEl.style.opacity = '0';
@@ -1352,7 +1352,6 @@
         // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
             const player = new KioskMusicPlayer();
-
             // Enable click-to-play for browsers that block autoplay
             document.addEventListener('click', function enableAudio() {
                 if (player.audioPlayer && player.audioPlayer.paused && !player.isPlaying) {
@@ -1390,4 +1389,3 @@
     </script>
 </body>
 </html>
-
