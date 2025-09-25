@@ -450,7 +450,7 @@
             right: 0;
             bottom: 0;
             background: rgba(0, 0, 0, 0.9);
-            display: grid;
+            display: none;
             place-items: center;
             z-index: 2000;
         }
@@ -583,10 +583,10 @@
     <!-- Admin PIN Modal -->
     <div class="pin-modal" id="pin-modal">
         <div class="pin-content">
-            <h2>Admin Access Required</h2>
-            <p>Enter PIN to unlock admin features:</p>
-            <input type="password" class="pin-input" id="pin-input" placeholder="Enter PIN">
-            <button class="pin-btn" id="pin-submit">Submit</button>
+            <h2 id="pin-modal-title">Set Admin PIN</h2>
+            <p>Set a 4-digit PIN for admin access:</p>
+            <input type="password" class="pin-input" id="pin-input" placeholder="Set a 4-digit PIN" maxlength="4">
+            <button class="pin-btn" id="pin-submit">Save PIN</button>
         </div>
     </div>
 
@@ -626,7 +626,7 @@
                 this.isPlaying = false;
                 this.selectedSongs = new Set();
                 this.isAdmin = false;
-                this.adminPin = '1234'; // Default PIN, can be changed
+                this.adminPin = localStorage.getItem('adminPin') || null;
 
                 this.init();
             }
@@ -634,8 +634,13 @@
             async init() {
                 this.setupEventListeners();
                 await this.loadTrackData();
-                this.showPinModal();
-                this.startPlayback();
+
+                // Show PIN modal only if no PIN is set
+                if (!this.adminPin) {
+                    this.showPinSetupModal();
+                } else {
+                    this.startPlayback();
+                }
             }
 
             setupEventListeners() {
@@ -674,16 +679,35 @@
                 }, { passive: false });
             }
 
-            showPinModal() {
+            showPinSetupModal() {
                 this.pinModal.style.display = 'grid';
+                document.getElementById('pin-modal-title').textContent = 'Set Admin PIN';
+                this.pinInput.value = '';
+                this.pinInput.placeholder = 'Set a 4-digit PIN';
             }
 
             checkPin() {
-                if (this.pinInput.value === this.adminPin) {
-                    this.isAdmin = true;
+                const enteredPin = this.pinInput.value.trim();
+
+                if (enteredPin.length !== 4 || isNaN(enteredPin)) {
+                    alert('Please enter a valid 4-digit PIN.');
+                    return;
+                }
+
+                if (!this.adminPin) {
+                    // Save new PIN
+                    this.adminPin = enteredPin;
+                    localStorage.setItem('adminPin', this.adminPin);
                     this.pinModal.style.display = 'none';
+                    this.startPlayback();
                 } else {
-                    alert('Incorrect PIN!');
+                    // Verify existing PIN
+                    if (enteredPin === this.adminPin) {
+                        this.isAdmin = true;
+                        this.pinModal.style.display = 'none';
+                    } else {
+                        alert('Incorrect PIN!');
+                    }
                 }
             }
 
@@ -1039,3 +1063,4 @@
     </script>
 </body>
 </html>
+
