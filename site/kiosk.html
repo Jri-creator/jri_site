@@ -204,23 +204,12 @@
             height: 25px;
             cursor: pointer;
             display: none;
-        }
-
-        .restrict-btn {
-            background: rgba(255, 165, 0, 0.8);
-            border: none;
-            color: white;
-            border-radius: 50%;
-            width: 25px;
-            height: 25px;
-            cursor: pointer;
-            display: none;
             margin-left: 5px;
         }
 
         .controls {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
             gap: 15px;
             margin-top: 20px;
         }
@@ -263,6 +252,16 @@
         .admin-btn.logout {
             background: rgba(255, 82, 82, 0.8);
             border-color: rgba(255, 82, 82, 0.8);
+        }
+
+        .restrict-btn {
+            background: rgba(255, 165, 0, 0.8);
+            border-color: rgba(255, 165, 0, 0.8);
+            display: none;
+        }
+
+        .restrict-btn:hover {
+            background: rgba(255, 165, 0, 1);
         }
 
         /* Modal Styles */
@@ -651,6 +650,7 @@
                 <button class="control-btn" id="skip-btn">Skip Song</button>
                 <button class="control-btn primary" id="add-song-btn">Add Songs</button>
                 <button class="control-btn admin-btn" id="admin-btn">Admin Mode</button>
+                <button class="control-btn restrict-btn" id="restrict-btn">Restrict Songs</button>
             </div>
         </div>
     </div>
@@ -712,6 +712,7 @@
                 this.skipBtn = document.getElementById('skip-btn');
                 this.addSongBtn = document.getElementById('add-song-btn');
                 this.adminBtn = document.getElementById('admin-btn');
+                this.restrictBtn = document.getElementById('restrict-btn');
 
                 // Modal elements
                 this.songModal = document.getElementById('song-modal');
@@ -760,6 +761,7 @@
                 this.addSongBtn.addEventListener('click', () => this.openSongModal());
                 this.skipBtn.addEventListener('click', () => this.skipTrack());
                 this.adminBtn.addEventListener('click', () => this.toggleAdminMode());
+                this.restrictBtn.addEventListener('click', () => this.openRestrictModal());
 
                 // Modal handlers
                 this.closeModal.addEventListener('click', () => this.closeSongModal());
@@ -819,6 +821,7 @@
                         this.pinModal.style.display = 'none';
                         this.adminBtn.textContent = 'Logout';
                         this.adminBtn.classList.add('logout');
+                        this.restrictBtn.style.display = 'block';
                         this.updateQueueDisplay();
                     } else {
                         alert('Incorrect PIN!');
@@ -831,12 +834,55 @@
                     this.isAdmin = false;
                     this.adminBtn.textContent = 'Admin Mode';
                     this.adminBtn.classList.remove('logout');
+                    this.restrictBtn.style.display = 'none';
                 } else {
                     this.pinModal.style.display = 'grid';
                     document.getElementById('pin-modal-title').textContent = 'Enter Admin PIN';
                     this.pinInput.value = '';
                     this.pinInput.placeholder = 'Enter your 4-digit PIN';
                 }
+                this.updateQueueDisplay();
+            }
+
+            openRestrictModal() {
+                const modal = document.createElement('div');
+                modal.className = 'restrict-modal-overlay';
+                modal.innerHTML = `
+                    <div class="restrict-modal">
+                        <h3>Restrict Songs</h3>
+                        <p>Select songs to restrict:</p>
+                        <div class="song-list" id="restrict-song-list">
+                            ${this.queue.map((item, index) => `
+                                <div class="song-item" data-id="${item.id}">
+                                    <div class="song-item-title">${item.title}</div>
+                                    <div class="song-item-artist">${item.artist}</div>
+                                    <div class="restrict-options">
+                                        <button class="restrict-option red" data-id="${item.id}" data-level="red">Don't Play</button>
+                                        <button class="restrict-option green" data-id="${item.id}" data-level="green">Play</button>
+                                        <button class="restrict-option yellow" data-id="${item.id}" data-level="yellow">Play After 5</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button class="restrict-cancel">Close</button>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                modal.querySelector('.restrict-cancel').addEventListener('click', () => modal.remove());
+                modal.querySelectorAll('.restrict-option').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const id = e.target.dataset.id;
+                        const level = e.target.dataset.level;
+                        this.applyRestriction(id, level);
+                    });
+                });
+            }
+
+            applyRestriction(id, level) {
+                const restrictions = JSON.parse(localStorage.getItem('restrictedSongs') || '{}');
+                restrictions[id] = level;
+                localStorage.setItem('restrictedSongs', JSON.stringify(restrictions));
                 this.updateQueueDisplay();
             }
 
@@ -1020,15 +1066,12 @@
                                     <div class="queue-item-artist">${item.artist}</div>
                                     ${item.requester ? `<div class="queue-item-requester">Requested by ${item.requester}</div>` : ''}
                                 </div>
-                                ${this.isAdmin ? `
-                                    <button class="delete-btn" data-id="${item.id}">×</button>
-                                    <button class="restrict-btn" data-id="${item.id}">${restricted === 'red' ? '✗' : restricted === 'green' ? '✓' : restricted === 'yellow' ? '⏭' : '!'}</button>
-                                ` : ''}
+                                ${this.isAdmin ? `<button class="delete-btn" data-id="${item.id}">×</button>` : ''}
                             </div>
                         `;
                     }).join('');
 
-                    // Add delete and restrict handlers
+                    // Add delete handlers
                     if (this.isAdmin) {
                         this.queueList.querySelectorAll('.delete-btn').forEach(btn => {
                             btn.addEventListener('click', (e) => {
@@ -1037,62 +1080,12 @@
                                 this.deleteQueueItem(id);
                             });
                         });
-
-                        this.queueList.querySelectorAll('.restrict-btn').forEach(btn => {
-                            btn.addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                const id = e.target.dataset.id;
-                                this.restrictSong(id);
-                            });
-                        });
                     }
                 }
             }
 
             deleteQueueItem(id) {
                 this.queue = this.queue.filter(item => item.id != id);
-                this.updateQueueDisplay();
-            }
-
-            restrictSong(id) {
-                const song = this.queue.find(item => item.id == id);
-                if (song) {
-                    this.showRestrictModal(song);
-                }
-            }
-
-            showRestrictModal(song) {
-                const modal = document.createElement('div');
-                modal.className = 'restrict-modal-overlay';
-                modal.innerHTML = `
-                    <div class="restrict-modal">
-                        <h3>Restrict: ${song.title}</h3>
-                        <p>Choose restriction level:</p>
-                        <div class="restrict-options">
-                            <button class="restrict-option red" data-id="${song.id}" data-level="red">Don't Play</button>
-                            <button class="restrict-option green" data-id="${song.id}" data-level="green">Play</button>
-                            <button class="restrict-option yellow" data-id="${song.id}" data-level="yellow">Play After 5 Songs</button>
-                        </div>
-                        <button class="restrict-cancel">Cancel</button>
-                    </div>
-                `;
-                document.body.appendChild(modal);
-
-                modal.querySelector('.restrict-cancel').addEventListener('click', () => modal.remove());
-                modal.querySelectorAll('.restrict-option').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const level = e.target.dataset.level;
-                        this.applyRestriction(song.id, level);
-                        modal.remove();
-                    });
-                });
-            }
-
-            applyRestriction(id, level) {
-                // Store restriction in localStorage
-                const restrictions = JSON.parse(localStorage.getItem('restrictedSongs') || '{}');
-                restrictions[id] = level;
-                localStorage.setItem('restrictedSongs', JSON.stringify(restrictions));
                 this.updateQueueDisplay();
             }
 
@@ -1253,4 +1246,5 @@
     </script>
 </body>
 </html>
+
 
