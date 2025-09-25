@@ -165,6 +165,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: relative;
         }
 
         .queue-item:hover {
@@ -172,9 +173,17 @@
             transform: translateX(5px);
         }
 
+        .queue-item:hover .delete-btn {
+            display: block;
+        }
+
         .queue-item.playing {
             background: rgba(121, 218, 232, 0.2);
             border-left-color: #B3E5FC;
+        }
+
+        .queue-item-content {
+            flex: 1;
         }
 
         .queue-item-title {
@@ -204,7 +213,15 @@
             height: 25px;
             cursor: pointer;
             display: none;
-            margin-left: 5px;
+            margin-left: 10px;
+            font-size: 16px;
+            line-height: 1;
+            transition: all 0.3s ease;
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 82, 82, 1);
+            transform: scale(1.1);
         }
 
         .controls {
@@ -244,24 +261,36 @@
             border-color: #B3E5FC;
         }
 
-        .admin-btn {
+        .control-btn.admin {
             background: rgba(121, 218, 232, 0.8);
             border-color: rgba(121, 218, 232, 0.8);
         }
 
-        .admin-btn.logout {
+        .control-btn.admin:hover {
+            background: rgba(121, 218, 232, 1);
+        }
+
+        .control-btn.logout {
             background: rgba(255, 82, 82, 0.8);
             border-color: rgba(255, 82, 82, 0.8);
         }
 
-        .restrict-btn {
+        .control-btn.logout:hover {
+            background: rgba(255, 82, 82, 1);
+        }
+
+        .control-btn.restrict {
             background: rgba(255, 165, 0, 0.8);
             border-color: rgba(255, 165, 0, 0.8);
             display: none;
         }
 
-        .restrict-btn:hover {
+        .control-btn.restrict:hover {
             background: rgba(255, 165, 0, 1);
+        }
+
+        .control-btn.restrict.show {
+            display: block;
         }
 
         /* Modal Styles */
@@ -296,6 +325,7 @@
             box-shadow: 0 30px 100px rgba(0, 0, 0, 0.8);
             transform: scale(0.8);
             transition: transform 0.4s ease;
+            overflow-y: auto;
         }
 
         .modal-overlay.show .modal {
@@ -476,12 +506,28 @@
             z-index: 2000;
         }
 
+        .pin-modal.show {
+            display: grid;
+        }
+
         .pin-content {
-            background: #2d2d2d;
+            background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
             padding: 40px;
             border-radius: 20px;
             text-align: center;
             box-shadow: 0 30px 100px rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            min-width: 300px;
+        }
+
+        .pin-content h2 {
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .pin-content p {
+            margin-bottom: 20px;
+            color: #ccc;
         }
 
         .pin-input {
@@ -492,11 +538,24 @@
             border-radius: 10px;
             background: rgba(255, 255, 255, 0.05);
             color: white;
-            font-size: 16px;
+            font-size: 18px;
             text-align: center;
+            letter-spacing: 2px;
+        }
+
+        .pin-input:focus {
+            outline: none;
+            border-color: #79DAE8;
+        }
+
+        .pin-actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
         }
 
         .pin-btn {
+            flex: 1;
             background: #79DAE8;
             border: none;
             color: white;
@@ -511,8 +570,17 @@
             background: #B3E5FC;
         }
 
+        .pin-btn.cancel {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .pin-btn.cancel:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
         /* Restrict Modal */
-        .restrict-modal-overlay {
+        .restrict-modal {
             position: fixed;
             top: 0;
             left: 0;
@@ -524,37 +592,76 @@
             z-index: 3000;
         }
 
-        .restrict-modal {
-            background: #2d2d2d;
-            padding: 30px;
-            border-radius: 15px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+        .restrict-modal.show {
+            display: grid;
         }
 
-        .restrict-modal h3 {
+        .restrict-content {
+            background: linear-gradient(135deg, #2d2d2d, #1a1a1a);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 30px 100px rgba(0, 0, 0, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+            width: 600px;
+        }
+
+        .restrict-content h3 {
             margin-bottom: 15px;
             color: white;
         }
 
-        .restrict-modal p {
+        .restrict-content p {
             margin-bottom: 20px;
             color: #ccc;
+        }
+
+        .restrict-song-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+
+        .restrict-song-item {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            text-align: left;
+        }
+
+        .restrict-song-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .restrict-song-artist {
+            color: #ccc;
+            margin-bottom: 10px;
         }
 
         .restrict-options {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin: 20px 0;
+            gap: 10px;
+            margin-top: 10px;
         }
 
         .restrict-option {
-            padding: 10px 20px;
+            padding: 8px 15px;
             border: none;
             border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .restrict-option:hover {
+            transform: scale(1.05);
         }
 
         .restrict-option.red {
@@ -574,22 +681,28 @@
 
         .restrict-cancel {
             margin-top: 20px;
-            padding: 8px 20px;
+            padding: 12px 30px;
             background: rgba(255, 255, 255, 0.1);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 8px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
             cursor: pointer;
             color: white;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .restrict-cancel:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .restricted-red {
             opacity: 0.6;
-            border-left: 3px solid #e53935;
+            border-left: 3px solid #e53935 !important;
         }
 
         .restricted-yellow {
-            opacity: 0.6;
-            border-left: 3px solid #FFC107;
+            opacity: 0.8;
+            border-left: 3px solid #FFC107 !important;
         }
 
         /* Responsive Design */
@@ -612,6 +725,11 @@
 
             .modal-actions {
                 grid-template-columns: 1fr;
+            }
+
+            .controls {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
             }
         }
     </style>
@@ -649,8 +767,8 @@
             <div class="controls">
                 <button class="control-btn" id="skip-btn">Skip Song</button>
                 <button class="control-btn primary" id="add-song-btn">Add Songs</button>
-                <button class="control-btn admin-btn" id="admin-btn">Admin Mode</button>
-                <button class="control-btn restrict-btn" id="restrict-btn">Restrict Songs</button>
+                <button class="control-btn admin" id="admin-btn">Admin Mode</button>
+                <button class="control-btn restrict" id="restrict-btn">Restrict Songs</button>
             </div>
         </div>
     </div>
@@ -688,16 +806,29 @@
     <div class="pin-modal" id="pin-modal">
         <div class="pin-content">
             <h2 id="pin-modal-title">Set Admin PIN</h2>
-            <p>Set a 4-digit PIN for admin access:</p>
-            <input type="password" class="pin-input" id="pin-input" placeholder="Set a 4-digit PIN" maxlength="4">
-            <button class="pin-btn" id="pin-submit">Save PIN</button>
+            <p id="pin-modal-text">Set a 4-digit PIN for admin access:</p>
+            <input type="password" class="pin-input" id="pin-input" placeholder="Enter 4-digit PIN" maxlength="4">
+            <div class="pin-actions">
+                <button class="pin-btn cancel" id="pin-cancel">Cancel</button>
+                <button class="pin-btn" id="pin-submit">Save PIN</button>
+            </div>
         </div>
     </div>
 
     <!-- Restrict Modal -->
-    <div class="restrict-modal-overlay" id="restrict-modal"></div>
+    <div class="restrict-modal" id="restrict-modal">
+        <div class="restrict-content">
+            <h3>Restrict Songs</h3>
+            <p>Select how each song should be handled:</p>
+            <div class="restrict-song-list" id="restrict-song-list">
+                <!-- Restricted songs will be populated here -->
+            </div>
+            <button class="restrict-cancel" id="restrict-cancel">Close</button>
+        </div>
+    </div>
 
     <audio id="audio-player"></audio>
+
     <script>
         class KioskMusicPlayer {
             constructor() {
@@ -727,9 +858,12 @@
                 this.pinModal = document.getElementById('pin-modal');
                 this.pinInput = document.getElementById('pin-input');
                 this.pinSubmit = document.getElementById('pin-submit');
+                this.pinCancel = document.getElementById('pin-cancel');
 
                 // Restrict Modal
                 this.restrictModal = document.getElementById('restrict-modal');
+                this.restrictSongList = document.getElementById('restrict-song-list');
+                this.restrictCancel = document.getElementById('restrict-cancel');
 
                 // Player state
                 this.tracks = [];
@@ -738,9 +872,35 @@
                 this.isPlaying = false;
                 this.selectedSongs = new Set();
                 this.isAdmin = false;
-                this.adminPin = localStorage.getItem('adminPin') || null;
+                this.adminPin = this.getStorageItem('adminPin');
 
                 this.init();
+            }
+
+            // Safe storage methods
+            getStorageItem(key) {
+                try {
+                    return localStorage.getItem(key);
+                } catch (e) {
+                    console.warn('LocalStorage not available:', e);
+                    return null;
+                }
+            }
+
+            setStorageItem(key, value) {
+                try {
+                    localStorage.setItem(key, value);
+                } catch (e) {
+                    console.warn('LocalStorage not available:', e);
+                }
+            }
+
+            removeStorageItem(key) {
+                try {
+                    localStorage.removeItem(key);
+                } catch (e) {
+                    console.warn('LocalStorage not available:', e);
+                }
             }
 
             async init() {
@@ -769,7 +929,16 @@
                 this.addSelectedBtn.addEventListener('click', () => this.addSelectedSongs());
 
                 // Admin PIN handlers
-                this.pinSubmit.addEventListener('click', () => this.checkPin());
+                this.pinSubmit.addEventListener('click', () => this.handlePinSubmit());
+                this.pinCancel.addEventListener('click', () => this.hidePinModal());
+                this.pinInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.handlePinSubmit();
+                    }
+                });
+
+                // Restrict modal handlers
+                this.restrictCancel.addEventListener('click', () => this.hideRestrictModal());
 
                 // Search handler
                 this.searchInput.addEventListener('input', () => this.filterSongs());
@@ -779,11 +948,24 @@
                 this.audioPlayer.addEventListener('timeupdate', () => this.updateProgress());
                 this.audioPlayer.addEventListener('loadedmetadata', () => this.updateProgress());
                 this.audioPlayer.addEventListener('canplay', () => this.handleCanPlay());
+                this.audioPlayer.addEventListener('error', () => this.handleAudioError());
 
-                // Close modal on overlay click
+                // Close modals on overlay click
                 this.songModal.addEventListener('click', (e) => {
                     if (e.target === this.songModal) {
                         this.closeSongModal();
+                    }
+                });
+
+                this.pinModal.addEventListener('click', (e) => {
+                    if (e.target === this.pinModal) {
+                        this.hidePinModal();
+                    }
+                });
+
+                this.restrictModal.addEventListener('click', (e) => {
+                    if (e.target === this.restrictModal) {
+                        this.hideRestrictModal();
                     }
                 });
 
@@ -794,96 +976,164 @@
             }
 
             showPinSetupModal() {
-                this.pinModal.style.display = 'grid';
+                this.pinModal.classList.add('show');
                 document.getElementById('pin-modal-title').textContent = 'Set Admin PIN';
+                document.getElementById('pin-modal-text').textContent = 'Set a 4-digit PIN for admin access:';
                 this.pinInput.value = '';
-                this.pinInput.placeholder = 'Set a 4-digit PIN';
+                this.pinInput.placeholder = 'Enter 4-digit PIN';
+                this.pinInput.focus();
             }
 
-            checkPin() {
+            showPinAuthModal() {
+                this.pinModal.classList.add('show');
+                document.getElementById('pin-modal-title').textContent = 'Enter Admin PIN';
+                document.getElementById('pin-modal-text').textContent = 'Enter your 4-digit PIN to access admin mode:';
+                this.pinInput.value = '';
+                this.pinInput.placeholder = 'Enter PIN';
+                this.pinInput.focus();
+            }
+
+            hidePinModal() {
+                this.pinModal.classList.remove('show');
+                this.pinInput.value = '';
+            }
+
+            handlePinSubmit() {
                 const enteredPin = this.pinInput.value.trim();
 
                 if (enteredPin.length !== 4 || isNaN(enteredPin)) {
-                    alert('Please enter a valid 4-digit PIN.');
+                    this.showMessage('Please enter a valid 4-digit PIN.', 'error');
                     return;
                 }
 
                 if (!this.adminPin) {
-                    // Save new PIN
+                    // Setting new PIN
                     this.adminPin = enteredPin;
-                    localStorage.setItem('adminPin', this.adminPin);
-                    this.pinModal.style.display = 'none';
+                    this.setStorageItem('adminPin', this.adminPin);
+                    this.hidePinModal();
+                    this.showMessage('Admin PIN set successfully!', 'success');
                     this.startPlayback();
                 } else {
-                    // Verify existing PIN
+                    // Verifying existing PIN
                     if (enteredPin === this.adminPin) {
                         this.isAdmin = true;
-                        this.pinModal.style.display = 'none';
-                        this.adminBtn.textContent = 'Logout';
-                        this.adminBtn.classList.add('logout');
-                        this.restrictBtn.style.display = 'block';
-                        this.updateQueueDisplay();
+                        this.hidePinModal();
+                        this.updateAdminUI();
+                        this.showMessage('Admin mode activated!', 'success');
                     } else {
-                        alert('Incorrect PIN!');
+                        this.showMessage('Incorrect PIN! Try again.', 'error');
+                        this.pinInput.value = '';
+                        this.pinInput.focus();
                     }
                 }
             }
 
             toggleAdminMode() {
                 if (this.isAdmin) {
+                    // Logout
                     this.isAdmin = false;
-                    this.adminBtn.textContent = 'Admin Mode';
-                    this.adminBtn.classList.remove('logout');
-                    this.restrictBtn.style.display = 'none';
+                    this.updateAdminUI();
+                    this.showMessage('Admin mode deactivated.', 'info');
                 } else {
-                    this.pinModal.style.display = 'grid';
-                    document.getElementById('pin-modal-title').textContent = 'Enter Admin PIN';
-                    this.pinInput.value = '';
-                    this.pinInput.placeholder = 'Enter your 4-digit PIN';
+                    // Login
+                    this.showPinAuthModal();
+                }
+            }
+
+            updateAdminUI() {
+                if (this.isAdmin) {
+                    this.adminBtn.textContent = 'Logout';
+                    this.adminBtn.classList.add('logout');
+                    this.adminBtn.classList.remove('admin');
+                    this.restrictBtn.classList.add('show');
+                } else {
+                    this.adminBtn.textContent = 'Admin Mode';
+                    this.adminBtn.classList.add('admin');
+                    this.adminBtn.classList.remove('logout');
+                    this.restrictBtn.classList.remove('show');
                 }
                 this.updateQueueDisplay();
             }
 
             openRestrictModal() {
-                const modal = document.createElement('div');
-                modal.className = 'restrict-modal-overlay';
-                modal.innerHTML = `
-                    <div class="restrict-modal">
-                        <h3>Restrict Songs</h3>
-                        <p>Select songs to restrict:</p>
-                        <div class="song-list" id="restrict-song-list">
-                            ${this.queue.map((item, index) => `
-                                <div class="song-item" data-id="${item.id}">
-                                    <div class="song-item-title">${item.title}</div>
-                                    <div class="song-item-artist">${item.artist}</div>
-                                    <div class="restrict-options">
-                                        <button class="restrict-option red" data-id="${item.id}" data-level="red">Don't Play</button>
-                                        <button class="restrict-option green" data-id="${item.id}" data-level="green">Play</button>
-                                        <button class="restrict-option yellow" data-id="${item.id}" data-level="yellow">Play After 5</button>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                        <button class="restrict-cancel">Close</button>
-                    </div>
-                `;
-                document.body.appendChild(modal);
+                if (!this.isAdmin) {
+                    this.showMessage('Admin access required!', 'error');
+                    return;
+                }
 
-                modal.querySelector('.restrict-cancel').addEventListener('click', () => modal.remove());
-                modal.querySelectorAll('.restrict-option').forEach(btn => {
+                if (this.queue.length === 0) {
+                    this.showMessage('No songs in queue to restrict.', 'info');
+                    return;
+                }
+
+                this.populateRestrictModal();
+                this.restrictModal.classList.add('show');
+            }
+
+            populateRestrictModal() {
+                const restrictions = this.getRestrictions();
+                
+                this.restrictSongList.innerHTML = this.queue.map((item, index) => {
+                    const currentRestriction = restrictions[item.id] || 'green';
+                    
+                    return `
+                        <div class="restrict-song-item">
+                            <div class="restrict-song-title">${item.title}</div>
+                            <div class="restrict-song-artist">${item.artist}</div>
+                            ${item.requester ? `<div class="queue-item-requester">Requested by ${item.requester}</div>` : ''}
+                            <div class="restrict-options">
+                                <button class="restrict-option red ${currentRestriction === 'red' ? 'active' : ''}" 
+                                        data-id="${item.id}" data-level="red">Don't Play</button>
+                                <button class="restrict-option yellow ${currentRestriction === 'yellow' ? 'active' : ''}" 
+                                        data-id="${item.id}" data-level="yellow">Play After Queue</button>
+                                <button class="restrict-option green ${currentRestriction === 'green' ? 'active' : ''}" 
+                                        data-id="${item.id}" data-level="green">Play Normal</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                // Add event listeners to restriction buttons
+                this.restrictSongList.querySelectorAll('.restrict-option').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         const id = e.target.dataset.id;
                         const level = e.target.dataset.level;
                         this.applyRestriction(id, level);
+                        
+                        // Update button states
+                        const songItem = e.target.closest('.restrict-song-item');
+                        songItem.querySelectorAll('.restrict-option').forEach(b => b.classList.remove('active'));
+                        e.target.classList.add('active');
                     });
                 });
             }
 
+            hideRestrictModal() {
+                this.restrictModal.classList.remove('show');
+            }
+
+            getRestrictions() {
+                try {
+                    return JSON.parse(this.getStorageItem('restrictedSongs') || '{}');
+                } catch (e) {
+                    console.warn('Error parsing restrictions:', e);
+                    return {};
+                }
+            }
+
             applyRestriction(id, level) {
-                const restrictions = JSON.parse(localStorage.getItem('restrictedSongs') || '{}');
+                const restrictions = this.getRestrictions();
                 restrictions[id] = level;
-                localStorage.setItem('restrictedSongs', JSON.stringify(restrictions));
+                this.setStorageItem('restrictedSongs', JSON.stringify(restrictions));
                 this.updateQueueDisplay();
+                
+                const levelText = {
+                    'red': 'will not play',
+                    'yellow': 'will play after queue',
+                    'green': 'will play normally'
+                };
+                
+                this.showMessage(`Song restriction updated - ${levelText[level]}.`, 'info');
             }
 
             async loadTrackData() {
@@ -894,8 +1144,7 @@
                     const fileCount = parseInt(await countResponse.text());
 
                     if (fileCount === 0) {
-                        this.showError('No music files found.');
-                        return;
+                        throw new Error('No music files found');
                     }
 
                     // Load file data
@@ -907,37 +1156,51 @@
                     this.parseTrackData(fileData);
 
                     if (this.tracks.length === 0) {
-                        this.showError('No valid music files found.');
-                        return;
+                        throw new Error('No valid music files found');
                     }
 
                     this.populateSongList();
 
                 } catch (error) {
                     console.error('Error loading track data:', error);
-                    // Fallback to sample tracks
-                    this.tracks = [
-                        {
-                            title: "Sample Track 1",
-                            artist: "Sample Artist",
-                            filename: "https://filesamples.com/samples/audio/mp3/Sample_MP3_700KB.mp3",
-                            image: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNDAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzIxOTZGMyIvPjx0ZXh0IHg9IjIwMCIgeT0iMjAwIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0Ij5TYW1wbGUgMTwvdGV4dD48L3N2Zz4="
-                        },
-                        {
-                            title: "Sample Track 2",
-                            artist: "Sample Artist",
-                            filename: "https://filesamples.com/samples/audio/mp3/Sample_MP3_700KB.mp3",
-                            image: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNDAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzRDQUY1MCIvPjx0ZXh0IHg9IjIwMCIgeT0iMjAwIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0Ij5TYW1wbGUgMjwvdGV4dD48L3N2Zz4="
-                        },
-                        {
-                            title: "Sample Track 3",
-                            artist: "Another Artist",
-                            filename: "https://filesamples.com/samples/audio/mp3/Sample_MP3_700KB.mp3",
-                            image: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNDAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iI0Y0NDMzNiIvPjx0ZXh0IHg9IjIwMCIgeT0iMjAwIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSJ3aGl0ZSIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjI0Ij5TYW1wbGUgMzwvdGV4dD48L3N2Zz4="
-                        }
-                    ];
-                    this.populateSongList();
+                    // Use fallback sample tracks for demonstration
+                    this.loadFallbackTracks();
                 }
+            }
+
+            loadFallbackTracks() {
+                this.tracks = [
+                    {
+                        title: "Sample Track 1",
+                        artist: "Sample Artist",
+                        filename: "https://www.soundjay.com/misc/sounds/fail-buzzer-02.mp3",
+                        image: this.generatePlaceholderImage("Sample 1", "#2196F3")
+                    },
+                    {
+                        title: "Sample Track 2", 
+                        artist: "Sample Artist",
+                        filename: "https://www.soundjay.com/misc/sounds/fail-buzzer-02.mp3",
+                        image: this.generatePlaceholderImage("Sample 2", "#4CAF50")
+                    },
+                    {
+                        title: "Sample Track 3",
+                        artist: "Another Artist",
+                        filename: "https://www.soundjay.com/misc/sounds/fail-buzzer-02.mp3", 
+                        image: this.generatePlaceholderImage("Sample 3", "#F44336")
+                    }
+                ];
+                this.populateSongList();
+                this.showMessage('Using sample tracks for demonstration.', 'info');
+            }
+
+            generatePlaceholderImage(text, color) {
+                return `data:image/svg+xml;base64,${btoa(`
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" fill="none">
+                        <rect width="400" height="400" fill="${color}"/>
+                        <text x="200" y="200" dominant-baseline="middle" text-anchor="middle" 
+                              fill="white" font-family="Arial, sans-serif" font-size="24">${text}</text>
+                    </svg>
+                `)}`;
             }
 
             parseTrackData(data) {
@@ -956,7 +1219,7 @@
                                 filename: audioUrl,
                                 title: parts[1].replace(/_EQUAL_/g, '='),
                                 artist: parts[2].replace(/_EQUAL_/g, '='),
-                                image: parts[3] && parts[3] !== 'none' ? parts[3] : null
+                                image: parts[3] && parts[3] !== 'none' ? parts[3] : this.generatePlaceholderImage(parts[1], '#666')
                             });
                         }
                     }
@@ -964,6 +1227,8 @@
             }
 
             populateSongList() {
+                if (!this.songList) return;
+
                 this.songList.innerHTML = this.tracks.map((track, index) => `
                     <div class="song-item" data-index="${index}">
                         <div class="song-item-title">${track.title}</div>
@@ -987,11 +1252,8 @@
                 songItems.forEach(item => {
                     const title = item.querySelector('.song-item-title').textContent.toLowerCase();
                     const artist = item.querySelector('.song-item-artist').textContent.toLowerCase();
-                    if (title.includes(searchTerm) || artist.includes(searchTerm)) {
-                        item.style.display = 'block';
-                    } else {
-                        item.style.display = 'none';
-                    }
+                    const matches = title.includes(searchTerm) || artist.includes(searchTerm);
+                    item.style.display = matches ? 'block' : 'none';
                 });
             }
 
@@ -1004,9 +1266,16 @@
                     element.classList.add('selected');
                 }
 
-                this.addSelectedBtn.textContent = this.selectedSongs.size > 0
-                    ? `Add ${this.selectedSongs.size} Song${this.selectedSongs.size === 1 ? '' : 's'}`
-                    : 'Add Selected Songs';
+                this.updateAddButtonText();
+            }
+
+            updateAddButtonText() {
+                const count = this.selectedSongs.size;
+                if (count === 0) {
+                    this.addSelectedBtn.textContent = 'Add Selected Songs';
+                } else {
+                    this.addSelectedBtn.textContent = `Add ${count} Song${count === 1 ? '' : 's'}`;
+                }
             }
 
             openSongModal() {
@@ -1014,7 +1283,7 @@
                 this.userNameInput.value = '';
                 this.searchInput.value = '';
                 this.populateSongList();
-                this.addSelectedBtn.textContent = 'Add Selected Songs';
+                this.updateAddButtonText();
                 this.songModal.classList.add('show');
                 document.body.style.overflow = 'hidden';
             }
@@ -1026,6 +1295,11 @@
             }
 
             addSelectedSongs() {
+                if (this.selectedSongs.size === 0) {
+                    this.showMessage('Please select at least one song.', 'warning');
+                    return;
+                }
+
                 const userName = this.userNameInput.value.trim();
 
                 this.selectedSongs.forEach(trackIndex => {
@@ -1033,14 +1307,17 @@
                     this.queue.push({
                         ...track,
                         requester: userName || null,
-                        id: Date.now() + Math.random()
+                        id: Date.now() + Math.random() + trackIndex
                     });
                 });
 
                 this.updateQueueDisplay();
                 this.closeSongModal();
 
-                // Start playing the first queued song if nothing is playing
+                const count = this.selectedSongs.size;
+                this.showMessage(`${count} song${count === 1 ? '' : 's'} added to queue!`, 'success');
+
+                // Start playing if nothing is playing
                 if (!this.isPlaying && this.queue.length > 0) {
                     this.playNextFromQueue();
                 }
@@ -1051,46 +1328,56 @@
 
                 if (this.queue.length === 0) {
                     this.queueList.innerHTML = '<div class="empty-queue">No songs in queue. Playing random songs...</div>';
-                } else {
-                    this.queueList.innerHTML = this.queue.map((item, index) => {
-                        const restrictions = JSON.parse(localStorage.getItem('restrictedSongs') || '{}');
-                        const restricted = restrictions[item.id];
-                        let restrictedClass = '';
-                        if (restricted === 'red') restrictedClass = 'restricted-red';
-                        if (restricted === 'yellow') restrictedClass = 'restricted-yellow';
+                    return;
+                }
 
-                        return `
-                            <div class="queue-item ${index === 0 ? 'playing' : ''} ${restrictedClass}" data-id="${item.id}">
-                                <div>
-                                    <div class="queue-item-title">${item.title}</div>
-                                    <div class="queue-item-artist">${item.artist}</div>
-                                    ${item.requester ? `<div class="queue-item-requester">Requested by ${item.requester}</div>` : ''}
-                                </div>
-                                ${this.isAdmin ? `<button class="delete-btn" data-id="${item.id}">×</button>` : ''}
+                const restrictions = this.getRestrictions();
+
+                this.queueList.innerHTML = this.queue.map((item, index) => {
+                    const restricted = restrictions[item.id];
+                    let restrictedClass = '';
+                    if (restricted === 'red') restrictedClass = 'restricted-red';
+                    if (restricted === 'yellow') restrictedClass = 'restricted-yellow';
+
+                    return `
+                        <div class="queue-item ${index === 0 ? 'playing' : ''} ${restrictedClass}" data-id="${item.id}">
+                            <div class="queue-item-content">
+                                <div class="queue-item-title">${item.title}</div>
+                                <div class="queue-item-artist">${item.artist}</div>
+                                ${item.requester ? `<div class="queue-item-requester">Requested by ${item.requester}</div>` : ''}
                             </div>
-                        `;
-                    }).join('');
+                            ${this.isAdmin ? `<button class="delete-btn" data-id="${item.id}" title="Remove from queue">&times;</button>` : ''}
+                        </div>
+                    `;
+                }).join('');
 
-                    // Add delete handlers
-                    if (this.isAdmin) {
-                        this.queueList.querySelectorAll('.delete-btn').forEach(btn => {
-                            btn.addEventListener('click', (e) => {
-                                e.stopPropagation();
-                                const id = e.target.dataset.id;
-                                this.deleteQueueItem(id);
-                            });
+                // Add delete handlers for admin
+                if (this.isAdmin) {
+                    this.queueList.querySelectorAll('.delete-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const id = e.target.dataset.id;
+                            this.deleteQueueItem(id);
                         });
-                    }
+                    });
                 }
             }
 
             deleteQueueItem(id) {
+                const initialLength = this.queue.length;
                 this.queue = this.queue.filter(item => item.id != id);
-                this.updateQueueDisplay();
+                
+                if (this.queue.length < initialLength) {
+                    this.updateQueueDisplay();
+                    this.showMessage('Song removed from queue.', 'info');
+                }
             }
 
             startPlayback() {
-                if (this.tracks.length === 0) return;
+                if (this.tracks.length === 0) {
+                    this.showMessage('No tracks available to play.', 'error');
+                    return;
+                }
 
                 // If queue is empty, play random song
                 if (this.queue.length === 0) {
@@ -1112,9 +1399,31 @@
                     return;
                 }
 
-                const nextTrack = this.queue.shift();
-                this.updateQueueDisplay();
-                this.playTrack(nextTrack.track || nextTrack, nextTrack.requester);
+                const restrictions = this.getRestrictions();
+                let nextTrack = null;
+                let nextIndex = -1;
+
+                // Find next playable track
+                for (let i = 0; i < this.queue.length; i++) {
+                    const item = this.queue[i];
+                    const restriction = restrictions[item.id];
+                    
+                    if (restriction !== 'red') {
+                        nextTrack = item;
+                        nextIndex = i;
+                        break;
+                    }
+                }
+
+                if (nextTrack) {
+                    // Remove from queue and play
+                    this.queue.splice(nextIndex, 1);
+                    this.updateQueueDisplay();
+                    this.playTrack(nextTrack, nextTrack.requester);
+                } else {
+                    // All songs restricted, play random
+                    this.playRandomTrack();
+                }
             }
 
             playTrack(track, requester = null) {
@@ -1124,11 +1433,7 @@
                 // Update artwork with smooth transition
                 this.artworkImage.style.opacity = '0';
                 setTimeout(() => {
-                    if (track.image) {
-                        this.artworkImage.src = track.image;
-                    } else {
-                        this.artworkImage.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0MDAgNDAwIiBmaWxsPSJub25lIj48cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzMzMyIvPjx0ZXh0IHg9IjIwMCIgeT0iMjAwIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjY2IiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMzYiPk5vIEFydHdvcms8L3RleHQ+PC9zdmc+';
-                    }
+                    this.artworkImage.src = track.image || this.generatePlaceholderImage(track.title, '#666');
                     this.artworkImage.style.opacity = '1';
                 }, 300);
 
@@ -1136,7 +1441,7 @@
                 this.audioPlayer.src = track.filename;
                 this.audioPlayer.load();
 
-                // Auto-play with error handling
+                // Attempt to play
                 const playPromise = this.audioPlayer.play();
                 if (playPromise !== undefined) {
                     playPromise.then(() => {
@@ -1144,7 +1449,7 @@
                         console.log('Now playing:', track.title);
                     }).catch(error => {
                         console.error('Playback failed:', error);
-                        // Try next track if this one fails
+                        this.showMessage('Playback failed. Skipping to next track.', 'warning');
                         setTimeout(() => this.handleTrackEnd(), 2000);
                     });
                 }
@@ -1154,14 +1459,16 @@
 
             skipTrack() {
                 this.audioPlayer.pause();
+                this.audioPlayer.currentTime = 0;
                 this.isPlaying = false;
+                this.showMessage('Track skipped.', 'info');
                 this.handleTrackEnd();
             }
 
             handleTrackEnd() {
                 this.isPlaying = false;
 
-                // Play next song from queue or random
+                // Play next song after brief pause
                 setTimeout(() => {
                     if (this.queue.length > 0) {
                         this.playNextFromQueue();
@@ -1172,23 +1479,30 @@
             }
 
             handleCanPlay() {
-                // Auto-start playback
+                // Auto-start playback if not already playing
                 if (!this.isPlaying) {
                     const playPromise = this.audioPlayer.play();
                     if (playPromise !== undefined) {
                         playPromise.then(() => {
                             this.isPlaying = true;
                         }).catch(error => {
-                            console.log('Auto-play prevented:', error);
+                            console.log('Auto-play prevented by browser:', error);
+                            this.showMessage('Click anywhere to start playback.', 'info');
                         });
                     }
                 }
             }
 
+            handleAudioError() {
+                console.error('Audio error occurred');
+                this.showMessage('Audio playback error. Trying next track...', 'error');
+                setTimeout(() => this.handleTrackEnd(), 1000);
+            }
+
             updateProgress() {
                 if (this.audioPlayer.duration && this.audioPlayer.currentTime) {
                     const progress = (this.audioPlayer.currentTime / this.audioPlayer.duration) * 100;
-                    this.progressBar.style.width = `${progress}%`;
+                    this.progressBar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
                 }
             }
 
@@ -1201,16 +1515,50 @@
                 document.title = title;
             }
 
-            showError(message) {
-                this.currentTitle.textContent = 'Error';
-                this.currentArtist.textContent = message;
-                console.error(message);
+            showMessage(message, type = 'info') {
+                // Create temporary message element
+                const messageEl = document.createElement('div');
+                messageEl.textContent = message;
+                messageEl.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: ${type === 'error' ? '#f44336' : type === 'success' ? '#4caf50' : type === 'warning' ? '#ff9800' : '#2196f3'};
+                    color: white;
+                    padding: 15px 25px;
+                    border-radius: 10px;
+                    z-index: 10000;
+                    font-weight: bold;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                    transition: all 0.3s ease;
+                `;
+                
+                document.body.appendChild(messageEl);
+                
+                // Fade out and remove
+                setTimeout(() => {
+                    messageEl.style.opacity = '0';
+                    messageEl.style.transform = 'translateX(-50%) translateY(-20px)';
+                    setTimeout(() => {
+                        if (messageEl.parentNode) {
+                            messageEl.parentNode.removeChild(messageEl);
+                        }
+                    }, 300);
+                }, 3000);
             }
         }
 
         // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
-            new KioskMusicPlayer();
+            const player = new KioskMusicPlayer();
+            
+            // Enable click-to-play for browsers that block autoplay
+            document.addEventListener('click', function enableAudio() {
+                if (player.audioPlayer && player.audioPlayer.paused && !player.isPlaying) {
+                    player.audioPlayer.play().catch(() => {});
+                }
+            }, { once: true });
         });
 
         // Prevent context menu on touch devices
@@ -1223,9 +1571,9 @@
             if (e.key === 'F11') {
                 e.preventDefault();
                 if (!document.fullscreenElement) {
-                    document.documentElement.requestFullscreen();
+                    document.documentElement.requestFullscreen().catch(() => {});
                 } else {
-                    document.exitFullscreen();
+                    document.exitFullscreen().catch(() => {});
                 }
             }
         });
@@ -1246,5 +1594,3 @@
     </script>
 </body>
 </html>
-
-
