@@ -684,7 +684,7 @@
                     <span class="queue-count" id="queue-count">0</span>
                 </div>
                 <div id="queue-list">
-                    <div class="empty-queue">No songs in queue. Playing random songs...</div>
+                    <div class="empty-queue">No songs in queue! JriMail users can add songs for free!</div>
                 </div>
             </div>
             <div class="controls">
@@ -1102,7 +1102,7 @@ populateRestrictModal() {
                         if (restrictions[track.filename] !== 'red') {
                             this.toggleSongSelection(index, item);
                         } else {
-                            this.showMessage('This song is restricted and cannot be added.', 'warning');
+                            this.showMessage("Sorry, but this song is blocked by this song kiosk's Admin. To play this song anyway, sign into your JriMail account above. Error 403", 'error');
                         }
                     });
                 });
@@ -1178,7 +1178,7 @@ populateRestrictModal() {
             updateQueueDisplay() {
                 this.queueCount.textContent = this.queue.length;
                 if (this.queue.length === 0) {
-                    this.queueList.innerHTML = '<div class="empty-queue">No songs in queue. Playing random songs...</div>';
+                    this.queueList.innerHTML = '<div class="empty-queue">No songs in queue. JriMail users can play songs for free!</div>';
                     return;
                 }
                 const restrictions = this.getRestrictions();
@@ -1321,7 +1321,7 @@ populateRestrictModal() {
                             this.isPlaying = true;
                         }).catch(error => {
                             console.log('Auto-play prevented by browser:', error);
-                            this.showMessage('Click anywhere to start playback.', 'info');
+                            this.showMessage('Looks like you started JriMusic Kiosk. To start playback, click anywhere!', 'info');
                         });
                     }
                 }
