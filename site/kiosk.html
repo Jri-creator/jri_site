@@ -653,6 +653,11 @@
                 gap: 10px;
             }
         }
+
+        .restrict-option.active {
+            box-shadow: 0 0 10px 3px rgba(255, 255, 255, 0.7);
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -947,45 +952,46 @@
                 this.populateRestrictModal();
                 this.restrictModal.classList.add('show');
             }
-            populateRestrictModal() {
-                const restrictions = this.getRestrictions();
-                this.restrictSongList.innerHTML = `
-                    <div class="restrict-song-list" id="restrict-song-list">
-                        ${this.tracks.map((track) => {
-                            const currentRestriction = restrictions[track.filename] || 'green';
-                            return `
-                                <div class="restrict-song-item">
-                                    <div class="restrict-song-title">${track.title}</div>
-                                    <div class="restrict-song-artist">${track.artist}</div>
-                                    <div class="restrict-options">
-                                        <button class="restrict-option red ${currentRestriction === 'red' ? 'active' : ''}"
-                                                data-filename="${track.filename}" data-level="red">Don't Play</button>
-                                        <button class="restrict-option yellow ${currentRestriction === 'yellow' ? 'active' : ''}"
-                                                data-filename="${track.filename}" data-level="yellow">Play After Queue</button>
-                                        <button class="restrict-option green ${currentRestriction === 'green' ? 'active' : ''}"
-                                                data-filename="${track.filename}" data-level="green">Play Normal</button>
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>
-                `;
-                // Add search handler
-                document.getElementById('restrict-search-input').addEventListener('input', () => {
-                    this.filterRestrictSongs();
-                });
-                // Add event listeners to restriction buttons
-                this.restrictSongList.querySelectorAll('.restrict-option').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const filename = e.target.dataset.filename;
-                        const level = e.target.dataset.level;
-                        this.applyRestriction(filename, level);
-                        const songItem = e.target.closest('.restrict-song-item');
-                        songItem.querySelectorAll('.restrict-option').forEach(b => b.classList.remove('active'));
-                        e.target.classList.add('active');
-                    });
-                });
-            }
+populateRestrictModal() {
+    const restrictions = this.getRestrictions();
+    this.restrictSongList.innerHTML = this.tracks.map((track) => {
+        const currentRestriction = restrictions[track.filename] || 'green';
+        return `
+            <div class="restrict-song-item">
+                <div class="restrict-song-title">${track.title}</div>
+                <div class="restrict-song-artist">${track.artist}</div>
+                <div class="restrict-options">
+                    <button class="restrict-option red ${currentRestriction === 'red' ? 'active' : ''}"
+                            data-filename="${track.filename}" data-level="red">Don't Play</button>
+                    <button class="restrict-option yellow ${currentRestriction === 'yellow' ? 'active' : ''}"
+                            data-filename="${track.filename}" data-level="yellow">Limit Play</button>
+                    <button class="restrict-option green ${currentRestriction === 'green' ? 'active' : ''}"
+                            data-filename="${track.filename}" data-level="green">Play Normal</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // Add search handler
+    document.getElementById('restrict-search-input').addEventListener('input', () => {
+        this.filterRestrictSongs();
+    });
+
+    // Add event listeners to restriction buttons
+    this.restrictSongList.querySelectorAll('.restrict-option').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const filename = e.target.dataset.filename;
+            const level = e.target.dataset.level;
+            this.applyRestriction(filename, level);
+
+            // Update button states
+            const songItem = e.target.closest('.restrict-song-item');
+            songItem.querySelectorAll('.restrict-option').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
+        });
+    });
+}
+
             filterRestrictSongs() {
                 const searchTerm = document.getElementById('restrict-search-input').value.toLowerCase();
                 const songItems = this.restrictSongList.querySelectorAll('.restrict-song-item');
